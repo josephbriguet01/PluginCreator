@@ -1,0 +1,47 @@
+{
+    "Actions": [
+        %ACTIONS%
+    ],
+    "Author": "%AUTHOR%",
+    "Category": "The plugin category",
+    "CategoryIcon": "images/categoryIcon",
+    "CodePath": "%EXE%",
+    "CodePathMac": "%EXEMAC%",
+    "CodePathWin": "%EXE%",
+    "Description": "%DESCRIPTION%",
+    "Icon": "images/pluginIcon",
+    "Name": "%NAME%",
+    "Profiles": [
+        "Name": "Profile file name",
+        "DeviceType": 0,
+        "ReadOnly": false,
+        "DontAutoSwitchWhenInstalled": false
+    ],
+    "PropertyInspectorPath": "property_inspector/property_inspector.html",
+    "DefaultWindowSize": [500, 650],
+    "URL": "https://www.elgato.com/gaming/stream-deck",
+    "Version": "%VERSION%",
+    "SDKVersion": %SDK_VERSION%,
+    "OS": [{
+            "Platform": "mac", 
+            "MinimumVersion" : "10.11"
+        }, {
+            "Platform": "windows",
+            "MinimumVersion": "10"
+        }
+    ],
+    "Software": {
+        "MinimumVersion": "4.1"
+    },
+    "ApplicationsToMonitor": {
+        "mac": [
+            "com.apple.mail",
+            "com.apple.safari"
+        ],
+        "windows": [
+            "someapp.exe",
+            "anotherapp.exe"
+        ]
+    },
+    "Disabled": false
+}

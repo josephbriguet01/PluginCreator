@@ -1,0 +1,23 @@
+{
+            "Icon": "images/actionIcon",
+            "Name": "%NAME_ACTION%",
+            "PropertyInspectorPath": "property_inspector/property_inspector.html",
+            "States": [{
+                    "Image": "images/actionDefaultImage",
+                    "MultiActionImage": "images/actionDefaultImage",
+                    "Name": "StateName",
+                    "Title": "MyTitle",
+                    "ShowTitle": true,
+                    "TitleColor": "#FFFFFF",
+                    "TitleAlignment": "middle",
+                    "FontFamily": "Tahoma",
+                    "FontStyle": "Bold",
+                    "FontSize": "16",
+                    "FontUnderline": false
+                }
+            ],
+            "SupportedInMultiActions": false,
+            "Tooltip": "%TOOLTIP_ACTION%",
+            "UUID": "%UUID_ACTION%",
+            "VisibleInActionsList": true
+        }

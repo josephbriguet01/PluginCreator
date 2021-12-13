@@ -1,0 +1,78 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package <!--projectname-->;
+
+
+
+/**
+ *
+ * @author you
+ */
+public final class <!--ProjectName--> extends com.jasonpercus.plugincreator.PluginCreator {
+
+    
+
+//OVERRIDED
+    /**
+     * Returns the author of the plugin [Required]
+     * @return Returns the author of the plugin
+     */
+    @Override
+    public String author() {
+        return "you";
+    }
+
+    /**
+     * Return a general description of what the plugin does. This string is displayed to the user in the Stream Deck store [Required]
+     * @return Return a general description of what the plugin does. This string is displayed to the user in the Stream Deck store
+     */
+    @Override
+    public String description() {
+        return "The description of the plugin";
+    }
+
+    /**
+     * Return the name of the plugin. This string is displayed to the user in the Stream Deck store [Required]
+     * @return Return the name of the plugin. This string is displayed to the user in the Stream Deck store
+     */
+    @Override
+    public String name() {
+        return "The name of the plugin";
+    }
+
+    /**
+     * Return the version of the plugin which can only contain digits and periods. This is used for the software update mechanism [Required]
+     * @return Return the version of the plugin which can only contain digits and periods. This is used for the software update mechanism
+     */
+    @Override
+    public String version() {
+        return "1.0";
+    }
+    
+    /**
+     * Returns the name of the folder where the plugin will be stored [Required]
+     * @return Returns the name of the folder where the plugin will be stored
+     */
+    @Override
+    public String folderName() {
+        return "the_folder_name_where_the_plugin_will_be_saved";
+    }
+    
+    
+    
+//MAIN
+    /**
+     * Corresponds to the plugin startup method
+     * @param args Corresponds to the arguments provided by Stream Deck
+     */
+    public static void main(String[] args) {
+        //Plugin Init
+        com.jasonpercus.plugincreator.PluginCreator.register(args);
+    }
+    
+    
+    
+}

@@ -1,0 +1,67 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package <!--projectname-->;
+
+
+
+import com.jasonpercus.plugincreator.models.Target;
+import com.jasonpercus.plugincreator.models.events.KeyUp;
+
+
+
+/**
+ *
+ * @author you
+ */
+public class MyAction extends com.jasonpercus.plugincreator.Action {
+
+    
+    
+//OVERRIDED
+    /**
+     * Returns the name of the action
+     * @return Returns the name of the action
+     */
+    @Override
+    public String name() {
+        return "your_name_action";
+    }
+
+    /**
+     * Returns the tooltip of the action
+     * @return Returns the tooltip of the action
+     */
+    @Override
+    public String tooltip() {
+        return "your_tooltip_action";
+    }
+
+    /**
+     * Returns the uuid of the action
+     * @return Returns the uuid of the action
+     */
+    @Override
+    public String uuid() {
+        return "your_uuid_action";
+    }
+
+    
+    
+//EVENTS
+    /**
+     * When the button is up from a Stream Deck action
+     * @param actions Corresponds to the list of saved Actions
+     * @param event Corresponds to the recovered event
+     */
+    @Override
+    public void keyUp(java.util.HashMap<String, com.jasonpercus.plugincreator.Action> actions, KeyUp event) {
+        showOk();
+        setTitle("MyTitle", Target.BOTH);
+    }
+    
+    
+    
+}
