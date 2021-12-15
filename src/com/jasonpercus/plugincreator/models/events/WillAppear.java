@@ -19,7 +19,7 @@ import com.jasonpercus.plugincreator.models.Payload;
  * @author JasonPercus
  * @version 1.0
  */
-public class WillAppear {
+public final class WillAppear {
     
     
     

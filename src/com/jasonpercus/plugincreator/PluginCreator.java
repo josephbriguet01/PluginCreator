@@ -10,8 +10,6 @@ package com.jasonpercus.plugincreator;
 
 
 
-import com.jasonpercus.plugincreator.ui.OptionPane;
-import com.jasonpercus.plugincreator.ui.Screen;
 import com.jasonpercus.util.File;
 import com.jasonpercus.util.OS;
 
@@ -24,6 +22,14 @@ import com.jasonpercus.util.OS;
  */
 @SuppressWarnings("UseSpecificCatch")
 public abstract class PluginCreator {
+    
+    
+    
+//CONSTANTES
+    /**
+     * Corresponds to the version number of the plugin creator code
+     */
+    public final static int VERSION_CODE = 1;
     
 
     
@@ -106,6 +112,10 @@ public abstract class PluginCreator {
             java.awt.EventQueue.invokeLater(() -> {
                 new Screen().setVisible(true);
             });
+        } else if(args.length == 1 && args[0].equals("--version")){
+            System.out.println("v"+VERSION_CODE);
+        } else if(args.length == 1 && (args[0].equals("--help") || args[0].equals("?"))){
+            
         }
     }
     
@@ -127,9 +137,9 @@ public abstract class PluginCreator {
             }
         }else{
             Logger logger = new Logger();
-            java.util.HashMap<String, String> actions = prepareActionClass(logger, false);
+            java.util.List<EventManager> managers = prepareActionClass(logger);
             StreamDeckOptions options = new StreamDeckOptions(args);       
-            ConnectionManager manager = new ConnectionManager(logger, options, actions);
+            ConnectionManager manager = new ConnectionManager(logger, options, managers);
             manager.connect();
         }
     }
@@ -138,31 +148,24 @@ public abstract class PluginCreator {
     
 //METHODES PRIVATES
     /**
-     * Returns the name and path of the .class files that extend the Action class. Each .class file will be identified by the uuid of its class.
+     * Returns a list of instances of each EventManager created by the user
      * @param logger Corresponds to the object that manages the archiving of logs
-     * @param install Determines if you want to retrieve this list because it is a plugin installation process
-     * @return Returns the name and path of the .class files that extend the Action class. Each .class file will be identified by the uuid of its class.
+     * @return Returns a list of instances of each EventManager created by the user
      */
-    private static java.util.HashMap<String, String> prepareActionClass(Logger logger, boolean install){
-        java.util.HashMap<String, String> ACTIONS = new java.util.HashMap<>();
+    private static java.util.List<EventManager> prepareActionClass(Logger logger){
         java.util.List<String> CLASS_NAME = new java.util.ArrayList<>();
         try {
             java.net.URL path = PluginCreator.class.getProtectionDomain().getCodeSource().getLocation();
             File file = new File(path.toURI());
             System.out.println(file);
             if(!file.exists()){
-                if(!install){
-                    logger.log("The executed file does not exist !");
-                    System.exit(0);
-                }else{
-                    new OptionPane("Error", "The executed file does not exist !", OptionPane.TYPE_MESSAGE_ERROR).showMessageDialog();
-                }
+                logger.log("The executed file does not exist !");
+                System.exit(0);
             }
             java.util.jar.JarFile jar = new java.util.jar.JarFile(file);
             java.util.Enumeration enumeration = jar.entries();
             while (enumeration.hasMoreElements()) {
                 String tmp = enumeration.nextElement().toString();
-                System.out.println(tmp);
                 //On vérifie que le fichier courant est un .class (et pas un fichier d'informations du jar)
                 if (tmp.length() > 6 && tmp.substring(tmp.length() - 6).compareTo(".class") == 0) {
                     tmp = tmp.substring(0, tmp.length() - 6);
@@ -171,7 +174,7 @@ public abstract class PluginCreator {
                         Class<?> tmpClass = Class.forName(tmp);
                         if (tmpClass != null) {
                             String canonicalName = tmpClass.getCanonicalName();
-                            if (canonicalName != null && !canonicalName.equals("null") && tmpClass != Action.class && Action.class.isAssignableFrom(tmpClass)){
+                            if (canonicalName != null && !canonicalName.equals("null") && tmpClass != EventManager.class && EventManager.class.isAssignableFrom(tmpClass)){
                                 CLASS_NAME.add(tmpClass.getCanonicalName());
                             }
                         }
@@ -179,33 +182,26 @@ public abstract class PluginCreator {
                 }
             }
             sortActionClass(CLASS_NAME);
-            if(CLASS_NAME.isEmpty() && !install){
-                logger.log("No action class has been implemented !");
+            if(CLASS_NAME.isEmpty()){
+                logger.log("No event manager class has been implemented !");
                 System.exit(0);
             }else{
-                if(CLASS_NAME.isEmpty()){
-                    new OptionPane("No action", "No action class has been implemented !", OptionPane.TYPE_MESSAGE_ERROR).showMessageDialog();
-                }else{
-                    for(String s : CLASS_NAME){
-                        Action a = (Action) Class.forName(s).newInstance();
-                        ACTIONS.put(a.uuid().toLowerCase(), s);
-                    }
-                }
-                return ACTIONS;
+                
             }
+            java.util.List<EventManager> managers = new java.util.ArrayList<>();
+            for(String name : CLASS_NAME){
+                managers.add((EventManager) Class.forName(name).newInstance());
+            }
+            return managers;
         } catch (Exception ex) {
-            if(!install){
-                logger.log(ex);
-                System.exit(0);
-            }else{
-                new OptionPane(ex.getClass().getSimpleName(), ex.getMessage(), OptionPane.TYPE_MESSAGE_ERROR).showMessageDialog();
-            }
+            logger.log(ex);
+            System.exit(0);
         }
         return null;
     }
     
     /**
-     * Sorts the list of actions by retrieving those which are really valid
+     * Sorts the list of EventManagers by retrieving those which are really valid
      * @param className Corresponds to the list of class names which are potentially good and which must be validated
      */
     private static void sortActionClass(java.util.List<String> className){
@@ -449,7 +445,6 @@ public abstract class PluginCreator {
      * @return Returns true if the manifest has been created. False if this already existed
      */
     private static boolean installManifest(PluginCreator plugin, File thisfile){
-        String actionBloc = getActionsBloc();
         String base = "";
         try{
             try (java.io.BufferedReader br = new java.io.BufferedReader(new java.io.InputStreamReader(PluginCreator.class.getResourceAsStream("ui/manifst.txt"), "ISO8859_1"))) {
@@ -458,8 +453,7 @@ public abstract class PluginCreator {
         }catch(java.io.IOException ex){
             new OptionPane(ex.getClass().getSimpleName(), ex.getMessage(), OptionPane.TYPE_MESSAGE_ERROR).showMessageDialog();
         }
-        base = base.replace("%ACTIONS%", actionBloc)
-                .replace("%AUTHOR%", plugin.author())
+        base = base.replace("%AUTHOR%", plugin.author())
                 .replace("%EXE%", thisfile.getName())
                 .replace("%EXEMAC%", thisfile.getName().replace(".exe", ""))
                 .replace("%DESCRIPTION%", plugin.description())
@@ -480,39 +474,6 @@ public abstract class PluginCreator {
         }else{
             return false;
         }
-    }
-    
-    /**
-     * Returns the action block needed to create a manifest
-     * @return Returns the action block needed to create a manifest
-     */
-    private static String getActionsBloc(){
-        java.util.HashMap<String, String> actions = prepareActionClass(null, true);
-        String base;
-        java.util.List<String> actionsText = new java.util.ArrayList<>();
-        try{
-            
-            try (java.io.BufferedReader br = new java.io.BufferedReader(new java.io.InputStreamReader(PluginCreator.class.getResourceAsStream("ui/action_manifst.txt"), "ISO8859_1"))) {
-                base = br.lines().collect(java.util.stream.Collectors.joining("\n"));
-            }
-
-            for (java.util.Map.Entry<String, String> act : actions.entrySet()) {
-                try {
-                    Action action = (Action) Class.forName(act.getValue()).newInstance();
-                    actionsText.add(base.replace("%NAME_ACTION%", action.name()).replace("%UUID_ACTION%", action.uuid()).replace("%TOOLTIP_ACTION%", action.tooltip()));
-                } catch (ClassNotFoundException | InstantiationException | IllegalAccessException ex) {
-                    java.util.logging.Logger.getLogger(PluginCreator.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-                }
-            }
-        }catch(java.io.IOException ex){
-            new OptionPane(ex.getClass().getSimpleName(), ex.getMessage(), OptionPane.TYPE_MESSAGE_ERROR).showMessageDialog();
-        }
-        base = "";
-        for(String text : actionsText){
-            if(!base.isEmpty()) base += ", ";
-            base += text;
-        }
-        return base;
     }
     
     /**

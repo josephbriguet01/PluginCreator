@@ -19,7 +19,7 @@ import com.jasonpercus.plugincreator.models.DeviceType;
  * @author JasonPercus
  * @version 1.0
  */
-public class DeviceDidConnect {
+public final class DeviceDidConnect {
     
     
     

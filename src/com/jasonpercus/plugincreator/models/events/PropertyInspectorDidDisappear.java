@@ -15,7 +15,7 @@ package com.jasonpercus.plugincreator.models.events;
  * @author JasonPercus
  * @version 1.0
  */
-public class PropertyInspectorDidDisappear {
+public final class PropertyInspectorDidDisappear {
     
     
     

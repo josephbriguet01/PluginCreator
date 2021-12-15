@@ -1,6 +1,28 @@
 {
     "Actions": [
-        %ACTIONS%
+        {
+            "Icon": "images/actionIcon",
+            "Name": "your action name",
+            "PropertyInspectorPath": "property_inspector/property_inspector.html",
+            "States": [{
+                    "Image": "images/actionDefaultImage",
+                    "MultiActionImage": "images/actionDefaultImage",
+                    "Name": "StateName",
+                    "Title": "MyTitle",
+                    "ShowTitle": true,
+                    "TitleColor": "#FFFFFF",
+                    "TitleAlignment": "middle",
+                    "FontFamily": "Tahoma",
+                    "FontStyle": "Bold",
+                    "FontSize": "16",
+                    "FontUnderline": false
+                }
+            ],
+            "SupportedInMultiActions": false,
+            "Tooltip": "your tooltip action",
+            "UUID": "your uuid action",
+            "VisibleInActionsList": true
+        }
     ],
     "Author": "%AUTHOR%",
     "Category": "The plugin category",

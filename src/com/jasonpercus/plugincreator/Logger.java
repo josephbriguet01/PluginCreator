@@ -36,7 +36,7 @@ public class Logger {
     /**
      * Create a Logger object which will have the function of recording the logs in a log file
      */
-    public Logger() {
+    Logger() {
         if(!(noLogs = new java.io.File("nologs").exists())){
             java.io.File file = new java.io.File("logs");
             if(!file.exists()) file.mkdir();
@@ -70,7 +70,7 @@ public class Logger {
     /**
      * Close the Logger object. The log file write stream is closed
      */
-    public synchronized void close(){
+    synchronized void close(){
         if(!noLogs){
             try {
                 this.bw.flush();

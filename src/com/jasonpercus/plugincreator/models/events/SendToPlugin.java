@@ -19,7 +19,7 @@ import com.jasonpercus.plugincreator.models.Payload;
  * @author JasonPercus
  * @version 1.0
  */
-public class SendToPlugin {
+public final class SendToPlugin {
     
     
     

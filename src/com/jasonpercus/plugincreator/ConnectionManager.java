@@ -31,7 +31,6 @@ import com.jasonpercus.plugincreator.models.events.DeviceDidDisconnect;
 import com.jasonpercus.plugincreator.models.events.KeyDown;
 import com.jasonpercus.plugincreator.models.Payload;
 import com.jasonpercus.plugincreator.models.Coordinates;
-import com.jasonpercus.plugincreator.models.Device;
 import com.jasonpercus.plugincreator.models.Extension;
 import com.jasonpercus.plugincreator.models.Target;
 import com.jasonpercus.plugincreator.models.events.ApplicationDidLaunch;
@@ -48,6 +47,7 @@ import com.jasonpercus.plugincreator.models.events.TitleParametersDidChange;
 import com.jasonpercus.plugincreator.models.events.WillAppear;
 import com.jasonpercus.plugincreator.models.events.WillDisappear;
 import com.jasonpercus.json.JSON;
+import com.jasonpercus.plugincreator.models.TitleParameters;
 import com.jasonpercus.util.File;
 
 
@@ -57,7 +57,7 @@ import com.jasonpercus.util.File;
  * @author JasonPercus
  * @version 1.0
  */
-public class ConnectionManager implements OnTextMessage {
+class ConnectionManager implements OnTextMessage {
 
     
     
@@ -73,19 +73,9 @@ public class ConnectionManager implements OnTextMessage {
     private final StreamDeckOptions OPTIONS;
     
     /**
-     * Corresponds to the list of actions found in the project
+     * Corresponds to the list of EventManagers found in the project
      */
-    private final java.util.HashMap<String, String> LIST_CLASS_NAME_ACTION;
-    
-    /**
-     * Corresponds to the list of created and saved actions
-     */
-    private final static java.util.HashMap<String, Action> ACTIONS = new java.util.HashMap<>();
-    
-    /**
-     * Corresponds to the list of active devices
-     */
-    private final java.util.HashMap<String, Device> DEVICES;
+    private final java.util.List<EventManager> MANAGERS;
     
     /**
      * Corresponds to the websocket
@@ -104,13 +94,12 @@ public class ConnectionManager implements OnTextMessage {
      * Creates a ConnexionManager object which will aim to manage the websocket. To receive and send events
      * @param logger Corresponds to the object that manages the archiving of logs
      * @param options Corresponds to options sent from Stream Deck for plugin registration
-     * @param actions Corresponds to the list of actions found in the project
+     * @param managers Corresponds to the list of EventManagers found in the project
      */
-    ConnectionManager(Logger logger, StreamDeckOptions options, java.util.HashMap<String, String> actions) {
-        this.LOGGER                 = logger;
-        this.OPTIONS                = options;
-        this.LIST_CLASS_NAME_ACTION = actions;
-        this.DEVICES                = new java.util.HashMap<>();
+    ConnectionManager(Logger logger, StreamDeckOptions options, java.util.List<EventManager> managers) {
+        this.LOGGER   = logger;
+        this.OPTIONS  = options;
+        this.MANAGERS = managers;
     }
     
     
@@ -138,6 +127,12 @@ public class ConnectionManager implements OnTextMessage {
     public void onOpen(Connection cnctn) {
         this.SENDER = new Sender(cnctn);
         LOGGER.log("OPENED");
+        for(EventManager manager : MANAGERS){
+            manager.setLOGGER(LOGGER);
+            manager.setOPTIONS(OPTIONS);
+            manager.setSENDER(SENDER);
+        }
+        
         String json = String.format("{\"event\": \"%s\", \"uuid\": \"%s\"}", OPTIONS.registerPlugin, OPTIONS.pluginUUID);
         try {
             cnctn.sendMessage(json);
@@ -170,104 +165,74 @@ public class ConnectionManager implements OnTextMessage {
      */
     @Override
     public void onMessage(String message) {
-        LOGGER.log("MESSAGE:\n\t" + message+"\n");
-        Gson gson = new GsonBuilder().registerTypeAdapter(Payload.class, new DeserializePayload()).create();
-        if(message.contains("\"event\":\"deviceDidConnect\"")){
-            deviceDidConnect(gson, message);
-        }else if(message.contains("\"event\":\"deviceDidDisconnect\"")){
-            deviceDidDisconnect(gson, message);
-        }else if(message.contains("\"event\":\"keyDown\"")){
-            keyDown(gson, message);
-        }else if(message.contains("\"event\":\"keyUp\"")){
-            keyUp(gson, message);
-        }else if(message.contains("\"event\":\"willAppear\"")){
-            willAppear(gson, message);
-        }else if(message.contains("\"event\":\"willDisappear\"")){
-            willDisappear(gson, message);
-        }else if(message.contains("\"event\":\"titleParametersDidChange\"")){
-            titleParametersDidChange(gson, message);
-        }else if(message.contains("\"event\":\"applicationDidLaunch\"")){
-            applicationDidLaunch(gson, message);
-        }else if(message.contains("\"event\":\"applicationDidTerminate\"")){
-            applicationDidTerminate(gson, message);
-        }else if(message.contains("\"event\":\"systemDidWakeUp\"")){
-            systemDidWakeUp(gson, message);
-        }else if(message.contains("\"event\":\"propertyInspectorDidAppear\"")){
-            propertyInspectorDidAppear(gson, message);
-        }else if(message.contains("\"event\":\"propertyInspectorDidDisappear\"")){
-            propertyInspectorDidDisappear(gson, message);
-        }else if(message.contains("\"event\":\"sendToPlugin\"")){
-            sendToPlugin(gson, message);
-        }else if(message.contains("\"event\":\"sendToPropertyInspector\"")){
-            sendToPropertyInspector(gson, message);
-        }else if(message.contains("\"event\":\"didReceiveSettings\"")){
-            didReceiveSettings(gson, message);
-        }else if(message.contains("\"event\":\"didReceiveGlobalSettings\"")){
-            didReceiveGlobalSettings(gson, message);
-        }
-    }
-    
-    /**
-     * Returns the list of actions recorded for this plugins
-     * @return Returns the list of actions recorded for this plugins
-     */
-    public static java.util.HashMap<String, Action> getActions(){
-        java.util.HashMap<String, Action> copy = new java.util.HashMap<>();
-        synchronized(ACTIONS){
-            for (java.util.Map.Entry<String, Action> mapentry : ACTIONS.entrySet()) {
-                copy.put(mapentry.getKey(), mapentry.getValue());
+        try{
+            LOGGER.log("MESSAGE:\n\t" + message+"\n");
+            Gson gson = new GsonBuilder().registerTypeAdapter(Payload.class, new DeserializePayload()).create();
+            if(message.contains("\"event\":\"deviceDidConnect\"")){
+                deviceDidConnect(gson, message);
+            }else if(message.contains("\"event\":\"deviceDidDisconnect\"")){
+                deviceDidDisconnect(gson, message);
+            }else if(message.contains("\"event\":\"keyDown\"")){
+                keyDown(gson, message);
+            }else if(message.contains("\"event\":\"keyUp\"")){
+                keyUp(gson, message);
+            }else if(message.contains("\"event\":\"willAppear\"")){
+                willAppear(gson, message);
+            }else if(message.contains("\"event\":\"willDisappear\"")){
+                willDisappear(gson, message);
+            }else if(message.contains("\"event\":\"titleParametersDidChange\"")){
+                titleParametersDidChange(gson, message);
+            }else if(message.contains("\"event\":\"applicationDidLaunch\"")){
+                applicationDidLaunch(gson, message);
+            }else if(message.contains("\"event\":\"applicationDidTerminate\"")){
+                applicationDidTerminate(gson, message);
+            }else if(message.contains("\"event\":\"systemDidWakeUp\"")){
+                systemDidWakeUp(gson, message);
+            }else if(message.contains("\"event\":\"propertyInspectorDidAppear\"")){
+                propertyInspectorDidAppear(gson, message);
+            }else if(message.contains("\"event\":\"propertyInspectorDidDisappear\"")){
+                propertyInspectorDidDisappear(gson, message);
+            }else if(message.contains("\"event\":\"sendToPlugin\"")){
+                sendToPlugin(gson, message);
+            }else if(message.contains("\"event\":\"sendToPropertyInspector\"")){
+                sendToPropertyInspector(gson, message);
+            }else if(message.contains("\"event\":\"didReceiveSettings\"")){
+                didReceiveSettings(gson, message);
+            }else if(message.contains("\"event\":\"didReceiveGlobalSettings\"")){
+                didReceiveGlobalSettings(gson, message);
             }
+        }catch(Exception ex){
+            LOGGER.log("onMessage EXCEPTION:");
+            LOGGER.log(ex);
         }
-        return copy;
     }
     
     
     
 //MESSAGES
     /**
-     * When a device is plugged to the computer, the plugin will receive a deviceDidConnect event
+     * EventManager received after calling the getSettings API to retrieve the persistent data stored for the action
      * @param gson Corresponds to a Gson object allowing to deserialize a json
      * @param message Corresponds to the received message
      */
-    private void deviceDidConnect(Gson gson, String message){
-        DeviceDidConnect event = gson.fromJson(message, DeviceDidConnect.class);
+    private void didReceiveSettings(Gson gson, String message){
+        DidReceiveSettings event = gson.fromJson(message, DidReceiveSettings.class);
         
-        Device device = getDevice(event.device);
-        if(device == null){
-            device = new Device(event.device);
-            add(device);
-        }
-        
-        java.util.HashMap<String, Action> actions = getActions();
-        for (java.util.Map.Entry<String, Action> mapentry : ACTIONS.entrySet()) {
-            Action action = mapentry.getValue();
-            if(action != null)
-                action.deviceDidConnect(actions, event, event.device, event.deviceInfo);
+        for(EventManager manager : MANAGERS){
+            manager.didReceiveSettings(event, event.context, event.payload.settings, new GsonBuilder());
         }
     }
     
     /**
-     * When a device is plugged to the computer, the plugin will receive a deviceDidConnect event
+     * EventManager received after calling the getGlobalSettings API to retrieve the global persistent data
      * @param gson Corresponds to a Gson object allowing to deserialize a json
      * @param message Corresponds to the received message
      */
-    private void deviceDidDisconnect(Gson gson, String message){
-        DeviceDidDisconnect event = gson.fromJson(message, DeviceDidDisconnect.class);
+    private void didReceiveGlobalSettings(Gson gson, String message){
+        DidReceiveGlobalSettings event = gson.fromJson(message, DidReceiveGlobalSettings.class);
         
-        Device device = getDevice(event.device);
-        if(device != null){
-            remove(device);
-            for (java.util.Map.Entry<String, Action> mapentry : ACTIONS.entrySet()) {
-                if(mapentry.getValue().getDevice().equals(device))
-                    mapentry.getValue().setDevice(null);
-            }
-        }
-        
-        java.util.HashMap<String, Action> actions = getActions();
-        for (java.util.Map.Entry<String, Action> mapentry : ACTIONS.entrySet()) {
-            Action action = mapentry.getValue();
-            if(action != null)
-                action.deviceDidDisconnect(actions, event, event.device);
+        for(EventManager manager : MANAGERS){
+            manager.didReceiveGlobalSettings(event, event.payload.settings, new GsonBuilder());
         }
     }
     
@@ -279,22 +244,8 @@ public class ConnectionManager implements OnTextMessage {
     private void keyDown(Gson gson, String message){
         KeyDown event = gson.fromJson(message, KeyDown.class);
         
-        Action action = getAction(event.context);
-        if(action == null){
-            action = createAction(event.action);
-            if(action != null){
-                action.setLogger(LOGGER);
-                action.setContext(event.context);
-                action.setSender(this.SENDER);
-                action.setDevice(getDevice(event.device));
-                add(action);
-            }
-        }
-        if(action != null){
-            action.setColumn(event.payload.coordinates.column);
-            action.setRow(event.payload.coordinates.row);
-            action.setIsInMultiAction(event.payload.isInMultiAction);
-            action.keyDown(getActions(), event);
+        for(EventManager manager : MANAGERS){
+            manager.keyDown(event, event.context, new GsonBuilder());
         }
     }
     
@@ -306,22 +257,8 @@ public class ConnectionManager implements OnTextMessage {
     private void keyUp(Gson gson, String message){
         KeyUp event = gson.fromJson(message, KeyUp.class);
         
-        Action action = getAction(event.context);
-        if(action == null){
-            action = createAction(event.action);
-            if(action != null){
-                action.setLogger(LOGGER);
-                action.setContext(event.context);
-                action.setSender(this.SENDER);
-                action.setDevice(getDevice(event.device));
-                add(action);
-            }
-        }
-        if(action != null){
-            action.setColumn(event.payload.coordinates.column);
-            action.setRow(event.payload.coordinates.row);
-            action.setIsInMultiAction(event.payload.isInMultiAction);
-            action.keyUp(getActions(), event);
+        for(EventManager manager : MANAGERS){
+            manager.keyUp(event, event.context, new GsonBuilder());
         }
     }
     
@@ -333,22 +270,8 @@ public class ConnectionManager implements OnTextMessage {
     private void willAppear(Gson gson, String message){
         WillAppear event = gson.fromJson(message, WillAppear.class);
         
-        Action action = getAction(event.context);
-        if(action == null){
-            action = createAction(event.action);
-            if(action != null){
-                action.setLogger(LOGGER);
-                action.setContext(event.context);
-                action.setSender(this.SENDER);
-                action.setDevice(getDevice(event.device));
-                add(action);
-            }
-        }
-        if(action != null){
-            action.setColumn(event.payload.coordinates.column);
-            action.setRow(event.payload.coordinates.row);
-            action.setIsInMultiAction(event.payload.isInMultiAction);
-            action.willAppear(getActions(), event);
+        for(EventManager manager : MANAGERS){
+            manager.willAppear(event, event.context, new GsonBuilder());
         }
     }
     
@@ -360,22 +283,8 @@ public class ConnectionManager implements OnTextMessage {
     private void willDisappear(Gson gson, String message){
         WillDisappear event = gson.fromJson(message, WillDisappear.class);
         
-        Action action = getAction(event.context);
-        if(action == null){
-            action = createAction(event.action);
-            if(action != null){
-                action.setLogger(LOGGER);
-                action.setContext(event.context);
-                action.setSender(this.SENDER);
-                action.setDevice(getDevice(event.device));
-                add(action);
-            }
-        }
-        if(action != null){
-            action.setColumn(event.payload.coordinates.column);
-            action.setRow(event.payload.coordinates.row);
-            action.setIsInMultiAction(event.payload.isInMultiAction);
-            action.willDisappear(getActions(), event);
+        for(EventManager manager : MANAGERS){
+            manager.willDisappear(event, event.context, new GsonBuilder());
         }
     }
     
@@ -387,22 +296,34 @@ public class ConnectionManager implements OnTextMessage {
     private void titleParametersDidChange(Gson gson, String message){
         TitleParametersDidChange event = gson.fromJson(message, TitleParametersDidChange.class);
         
-        Action action = getAction(event.context);
-        if(action == null){
-            action = createAction(event.action);
-            if(action != null){
-                action.setLogger(LOGGER);
-                action.setContext(event.context);
-                action.setSender(this.SENDER);
-                action.setDevice(getDevice(event.device));
-                add(action);
-            }
+        for(EventManager manager : MANAGERS){
+            manager.titleParametersDidChange(event, event.context, event.payload.title, event.payload.titleParameters, new GsonBuilder());
         }
-        if(action != null){
-            action.setColumn(event.payload.coordinates.column);
-            action.setRow(event.payload.coordinates.row);
-            action.setTitle(event.payload.title);
-            action.titleParametersDidChange(getActions(), event, event.payload.title, event.payload.titleParameters);
+    }
+    
+    /**
+     * When a device is plugged to the computer, the plugin will receive a deviceDidConnect event
+     * @param gson Corresponds to a Gson object allowing to deserialize a json
+     * @param message Corresponds to the received message
+     */
+    private void deviceDidConnect(Gson gson, String message){
+        DeviceDidConnect event = gson.fromJson(message, DeviceDidConnect.class);
+        
+        for(EventManager manager : MANAGERS){
+            manager.deviceDidConnect(event, event.device, event.deviceInfo, new GsonBuilder());
+        }
+    }
+    
+    /**
+     * When a device is plugged to the computer, the plugin will receive a deviceDidConnect event
+     * @param gson Corresponds to a Gson object allowing to deserialize a json
+     * @param message Corresponds to the received message
+     */
+    private void deviceDidDisconnect(Gson gson, String message){
+        DeviceDidDisconnect event = gson.fromJson(message, DeviceDidDisconnect.class);
+        
+        for(EventManager manager : MANAGERS){
+            manager.deviceDidDisconnect(event, event.device, new GsonBuilder());
         }
     }
     
@@ -413,12 +334,9 @@ public class ConnectionManager implements OnTextMessage {
      */
     private void applicationDidLaunch(Gson gson, String message){
         ApplicationDidLaunch event = gson.fromJson(message, ApplicationDidLaunch.class);
-        
-        java.util.HashMap<String, Action> actions = getActions();
-        for (java.util.Map.Entry<String, Action> mapentry : ACTIONS.entrySet()) {
-            Action action = mapentry.getValue();
-            if(action != null)
-                action.applicationDidLaunch(actions, event, event.payload.application);
+
+        for (EventManager manager : MANAGERS) {
+            manager.applicationDidLaunch(event, event.payload.application, new GsonBuilder());
         }
     }
     
@@ -430,11 +348,8 @@ public class ConnectionManager implements OnTextMessage {
     private void applicationDidTerminate(Gson gson, String message){
         ApplicationDidTerminate event = gson.fromJson(message, ApplicationDidTerminate.class);
         
-        java.util.HashMap<String, Action> actions = getActions();
-        for (java.util.Map.Entry<String, Action> mapentry : ACTIONS.entrySet()) {
-            Action action = mapentry.getValue();
-            if(action != null)
-                action.applicationDidTerminate(actions, event, event.payload.application);
+        for(EventManager manager : MANAGERS){
+            manager.applicationDidTerminate(event, event.payload.application, new GsonBuilder());
         }
     }
     
@@ -446,220 +361,60 @@ public class ConnectionManager implements OnTextMessage {
     private void systemDidWakeUp(Gson gson, String message){
         SystemDidWakeUp event = gson.fromJson(message, SystemDidWakeUp.class);
         
-        java.util.HashMap<String, Action> actions = getActions();
-        for (java.util.Map.Entry<String, Action> mapentry : ACTIONS.entrySet()) {
-            Action action = mapentry.getValue();
-            if(action != null)
-                action.systemDidWakeUp(actions, event);
+        for(EventManager manager : MANAGERS){
+            manager.systemDidWakeUp(event, new GsonBuilder());
         }
     }
     
     /**
-     * Event received when the Property Inspector appears in the Stream Deck software user interface, for example when selecting a new instance
+     * EventManager received when the Property Inspector appears in the Stream Deck software user interface, for example when selecting a new instance
      * @param gson Corresponds to a Gson object allowing to deserialize a json
      * @param message Corresponds to the received message
      */
     private void propertyInspectorDidAppear(Gson gson, String message){
         PropertyInspectorDidAppear event = gson.fromJson(message, PropertyInspectorDidAppear.class);
         
-        Action action = getAction(event.context);
-        if(action == null){
-            action = createAction(event.action);
-            if(action != null){
-                action.setLogger(LOGGER);
-                action.setContext(event.context);
-                action.setSender(this.SENDER);
-                action.setDevice(getDevice(event.device));
-                add(action);
-            }
-        }
-        if(action != null){
-            action.propertyInspectorDidAppear(getActions(), event);
+        for(EventManager manager : MANAGERS){
+            manager.propertyInspectorDidAppear(event, event.context, new GsonBuilder());
         }
     }
     
     /**
-     * Event received when the Property Inspector for an instance is removed from the Stream Deck software user interface, for example when selecting a different instance
+     * EventManager received when the Property Inspector for an instance is removed from the Stream Deck software user interface, for example when selecting a different instance
      * @param gson Corresponds to a Gson object allowing to deserialize a json
      * @param message Corresponds to the received message
      */
     private void propertyInspectorDidDisappear(Gson gson, String message){
         PropertyInspectorDidDisappear event = gson.fromJson(message, PropertyInspectorDidDisappear.class);
         
-        Action action = getAction(event.context);
-        if(action == null){
-            action = createAction(event.action);
-            if(action != null){
-                action.setLogger(LOGGER);
-                action.setContext(event.context);
-                action.setSender(this.SENDER);
-                action.setDevice(getDevice(event.device));
-                add(action);
-            }
-        }
-        if(action != null){
-            action.propertyInspectorDidDisappear(getActions(), event);
+        for(EventManager manager : MANAGERS){
+            manager.propertyInspectorDidDisappear(event, event.context, new GsonBuilder());
         }
     }
     
     /**
-     * Event received by the plugin when the Property Inspector uses the sendToPlugin event
+     * EventManager received by the plugin when the Property Inspector uses the sendToPlugin event
      * @param gson Corresponds to a Gson object allowing to deserialize a json
      * @param message Corresponds to the received message
      */
     private void sendToPlugin(Gson gson, String message){
         SendToPlugin event = gson.fromJson(message, SendToPlugin.class);
         
-        Action action = getAction(event.context);
-        if(action == null){
-            action = createAction(event.action);
-            if(action != null){
-                action.setLogger(LOGGER);
-                action.setContext(event.context);
-                action.setSender(this.SENDER);
-                add(action);
-            }
-        }
-        if(action != null){
-            action.sendToPlugin(getActions(), event, event.payload);
+        for(EventManager manager : MANAGERS){
+            manager.sendToPlugin(event, event.context, event.payload, new GsonBuilder());
         }
     }
     
     /**
-     * Event received by the Property Inspector when the plugin uses the sendToPropertyInspector event
+     * EventManager received by the Property Inspector when the plugin uses the sendToPropertyInspector event
      * @param gson Corresponds to a Gson object allowing to deserialize a json
      * @param message Corresponds to the received message
      */
     private void sendToPropertyInspector(Gson gson, String message){
         SendToPropertyInspector event = gson.fromJson(message, SendToPropertyInspector.class);
         
-        Action action = getAction(event.context);
-        if(action == null){
-            action = createAction(event.action);
-            if(action != null){
-                action.setLogger(LOGGER);
-                action.setContext(event.context);
-                action.setSender(this.SENDER);
-                add(action);
-            }
-        }
-        if(action != null){
-            action.sendToPropertyInspector(getActions(), event, event.payload);
-        }
-    }
-    
-    /**
-     * Event received after calling the getSettings API to retrieve the persistent data stored for the action
-     * @param gson Corresponds to a Gson object allowing to deserialize a json
-     * @param message Corresponds to the received message
-     */
-    private void didReceiveSettings(Gson gson, String message){
-        DidReceiveSettings event = gson.fromJson(message, DidReceiveSettings.class);
-        
-        Action action = getAction(event.context);
-        if(action == null){
-            action = createAction(event.action);
-            if(action != null){
-                action.setLogger(LOGGER);
-                action.setContext(event.context);
-                action.setSender(this.SENDER);
-                action.setDevice(getDevice(event.device));
-                add(action);
-            }
-        }
-        if(action != null){
-            action.setColumn(event.payload.coordinates.column);
-            action.setRow(event.payload.coordinates.row);
-            action.setIsInMultiAction(event.payload.isInMultiAction);
-            action.didReceiveSettings(getActions(), event, event.payload.settings, new GsonBuilder());
-        }
-    }
-    
-    /**
-     * Event received after calling the getGlobalSettings API to retrieve the global persistent data
-     * @param gson Corresponds to a Gson object allowing to deserialize a json
-     * @param message Corresponds to the received message
-     */
-    private void didReceiveGlobalSettings(Gson gson, String message){
-        DidReceiveGlobalSettings event = gson.fromJson(message, DidReceiveGlobalSettings.class);
-        
-        java.util.HashMap<String, Action> actions = getActions();
-        for (java.util.Map.Entry<String, Action> mapentry : ACTIONS.entrySet()) {
-            Action action = mapentry.getValue();
-            if(action != null)
-                action.didReceiveGlobalSettings(actions, event, event.payload.settings, new GsonBuilder());
-        }
-    }
-    
-    
-    
-//METHODES PRIVATES
-    /**
-     * Create an action
-     * @param name Corresponds to the name of the action
-     * @return Returns the created action
-     */
-    private Action createAction(String name){
-        String classpath = LIST_CLASS_NAME_ACTION.get(name);
-        if(classpath == null) return null;
-        try {
-            Action action = (Action) Class.forName(classpath).newInstance();
-            return action;
-        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException ex) {
-            LOGGER.log(ex);
-            return null;
-        }
-    }
-    
-    /**
-     * Return an action by its context
-     * @param context Corresponds to the context of the action
-     * @return Return an action by its context or null
-     */
-    private Action getAction(String context){
-        synchronized(ACTIONS){
-            return ACTIONS.get(context);
-        }
-    }
-    
-    /**
-     * Return a device by its context
-     * @param context Corresponds to the context of the device
-     * @return Return a device by its context or null
-     */
-    private Device getDevice(String context){
-        synchronized(DEVICES){
-            return DEVICES.get(context);
-        }
-    }
-    
-    /**
-     * Add an action to the list of recorded actions
-     * @param action Corresponds to the action to add
-     */
-    private void add(Action action){
-        synchronized(ACTIONS){
-            ACTIONS.put(action.getContext(), action);
-        }
-    }
-    
-    /**
-     * Add a device to the list of recorded devices
-     * @param device Corresponds to the device to add
-     */
-    private void add(Device device){
-        synchronized(DEVICES){
-            DEVICES.put(device.getContext(), device);
-        }
-    }
-    
-    /**
-     * Remove a device to the list of recorded devices
-     * @param device Corresponds to the device to remove
-     */
-    private void remove(Device device){
-        synchronized(DEVICES){
-            DEVICES.remove(device.getContext());
+        for(EventManager manager : MANAGERS){
+            manager.sendToPropertyInspector(event, event.context, event.payload, new GsonBuilder());
         }
     }
     
@@ -682,7 +437,10 @@ public class ConnectionManager implements OnTextMessage {
             JsonPrimitive state             = obj.getAsJsonPrimitive("state");
             JsonPrimitive userDesiredState  = obj.getAsJsonPrimitive("userDesiredState");
             JsonPrimitive isInMultiAction   = obj.getAsJsonPrimitive("isInMultiAction");
-
+            JsonPrimitive title             = obj.getAsJsonPrimitive("title");
+            JsonObject  titleParams         = obj.getAsJsonObject("titleParameters");
+            JsonPrimitive application       = obj.getAsJsonPrimitive("application");
+                    
             Gson g = new Gson();
 
             Payload payload                 = new Payload();
@@ -697,6 +455,12 @@ public class ConnectionManager implements OnTextMessage {
                 payload.userDesiredState    = userDesiredState.getAsInt();
             if(isInMultiAction != null)
                 payload.isInMultiAction     = isInMultiAction.getAsBoolean();
+            if(title != null)
+                payload.title               = title.getAsString();
+            if(titleParams != null)
+                payload.titleParameters     = g.fromJson(titleParams, TitleParameters.class);
+            if(application != null)
+                payload.application         = application.getAsString();
 
             return payload;
         }
@@ -1123,7 +887,7 @@ public class ConnectionManager implements OnTextMessage {
          * @param url Correspond to the url to check
          * @return Returns true, if the url is correct, otherwise false
          */
-        public boolean checkUrl(String url) {
+        private boolean checkUrl(String url) {
             try {
                 new java.net.URL(url).toURI();
                 return true;

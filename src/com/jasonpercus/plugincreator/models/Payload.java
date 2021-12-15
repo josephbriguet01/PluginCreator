@@ -58,7 +58,7 @@ public class Payload {
      * Corresponds to the application concerned
      */
     public String application;
-    
+
     
     
 }

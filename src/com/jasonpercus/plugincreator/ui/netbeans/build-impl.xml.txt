@@ -1086,7 +1086,18 @@ is divided into following sections:
         <delete file="${store.dir}/${store.jar.name}.jar"/>
         <delete file="launch.xml"/>
     </target>
-    <target depends="init,compile,-pre-jar,-do-jar,-post-jar" description="Build JAR." name="jar"/>
+
+    <target depends="init" description="Build JAR." name="jar">
+        <antcall target="compile"/>
+        <antcall target="-pre-jar"/>
+        <antcall target="-do-jar"/>
+        <antcall target="-post-jar"/>
+        <delete dir="dist"/>
+        <delete dir="nbproject/private"/>
+        <delete dir="build"/>
+        <delete dir="test"/>
+    </target>
+
     <!--
                 =================
                 EXECUTION SECTION
