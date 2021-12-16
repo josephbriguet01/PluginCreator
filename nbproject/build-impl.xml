@@ -27,9 +27,6 @@ is divided into following sections:
             </not>
         </condition>
     </fail>
-    <property name="store.bin" value="bin"/>
-    <property name="path.src" value="src/com/jasonpercus/plugincreator"/>
-    <property name="path.src.mainclass" value="${path.src}/PluginCreator.java"/>
     <target depends="test,jar,javadoc" description="Build and test whole project." name="default"/>
     <!-- 
                 ======================
