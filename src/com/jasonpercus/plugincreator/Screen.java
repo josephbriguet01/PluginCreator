@@ -410,7 +410,6 @@ class Screen extends javax.swing.JFrame {
             createFile("ui/netbeans/manifest.mf.txt",          name + "/manifest.mf", name, false);
             createFile("ui/netbeans/build.xml.txt",            name + "/build.xml", name, false);
             createFile("ui/netbeans/build-impl.xml.txt",       name + "/nbproject/build-impl.xml", name, false);
-            createFile("ui/netbeans/genfiles.properties.txt",  name + "/nbproject/genfiles.properties", name, false);
             createFile("ui/netbeans/project.properties.txt",   name + "/nbproject/project.properties", name, true);
             createFile("ui/netbeans/project.xml.txt",          name + "/nbproject/project.xml", name, false);
             createFile("ui/netbeans/MyPlugin.java.txt",        name + "/src/" + name.toLowerCase() + "/"+name+".java", name, false);

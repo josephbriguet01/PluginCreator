@@ -19,16 +19,11 @@ import com.jasonpercus.plugincreator.models.DeviceType;
  * @author JasonPercus
  * @version 1.0
  */
-public final class DeviceDidConnect {
+public final class DeviceDidConnect extends Event {
     
     
     
-//ATTRIBUTS
-    /**
-     * Corresponds to the name of the event
-     */
-    public String       event;
-    
+//ATTRIBUTS    
     /**
      * Corresponds to the ID of the equipment concerned
      */

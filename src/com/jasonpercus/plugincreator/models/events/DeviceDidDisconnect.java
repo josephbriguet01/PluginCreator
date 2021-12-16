@@ -15,14 +15,9 @@ package com.jasonpercus.plugincreator.models.events;
  * @author JasonPercus
  * @version 1.0
  */
-public final class DeviceDidDisconnect {
+public final class DeviceDidDisconnect extends Event {
     
     
-    
-    /**
-     * Corresponds to the name of the event
-     */
-    public String       event;
     
     /**
      * Corresponds to the ID of the equipment concerned

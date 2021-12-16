@@ -21,9 +21,9 @@ public enum Target {
     
 //CONSTANTES
     /**
-     * This target only points to the software
+     * This target points to software and hardware
      */
-    SOFTWARE(2),
+    BOTH(0),
     
     /**
      * This target only points to the hardware
@@ -31,9 +31,9 @@ public enum Target {
     HARDWARE(1),
     
     /**
-     * This target points to software and hardware
+     * This target only points to the software
      */
-    BOTH(0);
+    SOFTWARE(2);
 
     
     

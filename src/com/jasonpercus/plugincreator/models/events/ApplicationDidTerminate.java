@@ -19,14 +19,9 @@ import com.jasonpercus.plugincreator.models.Payload;
  * @author JasonPercus
  * @version 1.0
  */
-public final class ApplicationDidTerminate {
+public final class ApplicationDidTerminate extends Event {
     
     
-    
-    /**
-     * Corresponds to the name of the event
-     */
-    public String  event;
     
     /**
      * Corresponds to all types of data associated with this event

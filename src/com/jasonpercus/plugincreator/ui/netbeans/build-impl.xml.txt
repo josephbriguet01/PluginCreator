@@ -1093,7 +1093,6 @@ is divided into following sections:
         <antcall target="-do-jar"/>
         <antcall target="-post-jar"/>
         <delete dir="dist"/>
-        <delete dir="nbproject/private"/>
         <delete dir="build"/>
         <delete dir="test"/>
     </target>

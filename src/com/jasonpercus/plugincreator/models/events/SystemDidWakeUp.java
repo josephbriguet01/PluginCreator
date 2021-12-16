@@ -15,14 +15,7 @@ package com.jasonpercus.plugincreator.models.events;
  * @author JasonPercus
  * @version 1.0
  */
-public final class SystemDidWakeUp {
-    
-    
-    
-    /**
-     * Corresponds to the name of the event
-     */
-    public String event;
+public final class SystemDidWakeUp extends Event {
     
     
     

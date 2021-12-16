@@ -8,6 +8,7 @@ package <!--projectname-->;
 
 
 import com.google.gson.GsonBuilder;
+import com.jasonpercus.plugincreator.models.Context;
 import com.jasonpercus.plugincreator.models.events.KeyUp;
 
 
@@ -28,8 +29,8 @@ public class MyManager extends com.jasonpercus.plugincreator.EventManager {
      * @param builder Allows to deserialize the received json
      */
     @Override
-    public void keyUp(KeyUp event, String context, GsonBuilder builder) {
-        SENDER.showOk(context);
+    public void keyUp(KeyUp event, Context context, GsonBuilder builder) {
+        showOk(context);
     }
     
     

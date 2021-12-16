@@ -15,7 +15,7 @@ package com.jasonpercus.plugincreator.models.events;
  * @author JasonPercus
  * @version 1.0
  */
-public final class PropertyInspectorDidAppear {
+public final class PropertyInspectorDidAppear extends Event {
     
     
     
@@ -23,11 +23,6 @@ public final class PropertyInspectorDidAppear {
      * Corresponds to the action concerned by this event
      */
     public String  action;
-    
-    /**
-     * Corresponds to the name of the event
-     */
-    public String  event;
     
     /**
      * Corresponds to the unique id of the action concerned

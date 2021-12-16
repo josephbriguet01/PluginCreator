@@ -19,14 +19,9 @@ import com.jasonpercus.plugincreator.models.Payload;
  * @author JasonPercus
  * @version 1.0
  */
-public final class ApplicationDidLaunch {
+public final class ApplicationDidLaunch extends Event {
     
     
-    
-    /**
-     * Corresponds to the name of the event
-     */
-    public String  event;
     
     /**
      * Corresponds to all types of data associated with this event

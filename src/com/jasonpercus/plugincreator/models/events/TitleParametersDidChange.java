@@ -19,7 +19,7 @@ import com.jasonpercus.plugincreator.models.Payload;
  * @author JasonPercus
  * @version 1.0
  */
-public final class TitleParametersDidChange {
+public final class TitleParametersDidChange extends Event {
     
     
     
@@ -27,11 +27,6 @@ public final class TitleParametersDidChange {
      * Corresponds to the action concerned by this event
      */
     public String  action;
-    
-    /**
-     * Corresponds to the name of the event
-     */
-    public String  event;
     
     /**
      * Corresponds to the unique id of the action concerned
