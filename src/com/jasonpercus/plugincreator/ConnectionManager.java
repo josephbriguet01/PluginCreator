@@ -76,6 +76,11 @@ class ConnectionManager implements OnTextMessage {
      */
     private WebSocketClient CLIENT;
     
+    /**
+     * Determines if the socket is open or not
+     */
+    boolean opened;
+    
     
     
 //CONSTRUCTOR
@@ -114,9 +119,12 @@ class ConnectionManager implements OnTextMessage {
      */
     @Override
     public void onOpen(Connection cnctn) {
-        LOGGER.log("OPENED");
+        LOGGER.log("<-----------------------------------------------------START");
+        LOGGER.log("SOCKET OPENED");
+        this.opened = true;
         for(EventManager manager : MANAGERS){
             manager.setLOGGER(LOGGER);
+            manager.setConnectionManager(this);
             manager.setOPTIONS(OPTIONS);
             manager.setConnection(cnctn);
         }
@@ -127,6 +135,11 @@ class ConnectionManager implements OnTextMessage {
         } catch (java.io.IOException ex) {
             LOGGER.log(ex);
         }
+        LOGGER.log("BEFORE ON CREATE PLUGIN");
+        for(EventManager manager : MANAGERS){
+            manager.onCreate();
+        }
+        LOGGER.log("AFTER ON CREATE PLUGIN");
     }
 
     /**
@@ -136,12 +149,19 @@ class ConnectionManager implements OnTextMessage {
      */
     @Override
     public void onClose(int i, String string) {
+        this.opened = false;
         try {
             CLIENT.getFactory().stop();
-            LOGGER.log("CLOSED: ["+i+"] "+string);
+            LOGGER.log("SOCKET CLOSED: ["+i+"] "+string);
         } catch (Exception ex) {
-            
+            LOGGER.log("SOCKET CLOSED");
         } finally {
+            LOGGER.log("BEFORE ON DESTROY PLUGIN");
+            for(EventManager manager : MANAGERS){
+                manager.onDestroy();
+            }
+            LOGGER.log("AFTER ON DESTROY PLUGIN");
+            LOGGER.log("<-----------------------------------------------------END");
             LOGGER.close();
             System.exit(0);
         }
@@ -197,6 +217,8 @@ class ConnectionManager implements OnTextMessage {
                     for(EventManager manager : MANAGERS){
                         manager.event(event, new GsonBuilder());
                     }
+                }else{
+                    LOGGER.log("NOT FOUND onMessage: "+message);
                 }
             }
         }catch(Exception ex){

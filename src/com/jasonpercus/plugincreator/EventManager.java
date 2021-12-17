@@ -41,7 +41,6 @@ import com.jasonpercus.plugincreator.models.events.TitleParametersDidChange;
 import com.jasonpercus.plugincreator.models.events.WillAppear;
 import com.jasonpercus.plugincreator.models.events.WillDisappear;
 import com.jasonpercus.util.File;
-import org.eclipse.jetty.websocket.WebSocket.Connection;
 
 
 
@@ -68,7 +67,17 @@ public abstract class EventManager {
     /**
      * Corresponds to the WebSocket connection
      */
-    private Connection CONNECTION;
+    private org.eclipse.jetty.websocket.WebSocket.Connection CONNECTION;
+    
+    /**
+     * Corresponds to the ConnectionManager
+     */
+    private ConnectionManager manager;
+    
+    /**
+     * Allows you to know whether or not the socket is still open or not
+     */
+    public Connection Connexion;
     
     
     
@@ -102,8 +111,34 @@ public abstract class EventManager {
      * Changes the connection to the WebSocket
      * @param connection Corresponds to the new connection
      */
-    final void setConnection(Connection connection) {
+    final void setConnection(org.eclipse.jetty.websocket.WebSocket.Connection connection) {
         this.CONNECTION = connection;
+    }
+    
+    /**
+     * Changes the ConnectionManager
+     * @param manager Corresponds to the new ConnectionManager
+     */
+    final void setConnectionManager(ConnectionManager manager){
+        this.manager = manager;
+        this.Connexion = new Connection();
+    }
+    
+    
+    
+//ON
+    /**
+     * When the EventManager has been created
+     */
+    public void onCreate(){
+        
+    }
+    
+    /**
+     * When the EventManager is destroyed. This happens before the app is closed.
+     */
+    public void onDestroy(){
+        
     }
     
     
@@ -285,12 +320,12 @@ public abstract class EventManager {
     
     
     
-//METHODES PROTECTEDS
+//METHODES PUBLICS
     /**
      * Record a log
      * @param msg Corresponds to the log to be recorded
      */
-    protected final synchronized void log(String msg){
+    public final synchronized void log(String msg){
         LOGGER.log(msg);
     }
     
@@ -298,10 +333,13 @@ public abstract class EventManager {
      * Record a log
      * @param ex Corresponds to the exception to be logged
      */
-    protected final synchronized void log(Exception ex){
+    public final synchronized void log(Exception ex){
         LOGGER.log(ex);
     }
     
+    
+    
+//METHODES PROTECTEDS
     /**
      * Temporarily show an alert icon on the image displayed by an instance of an action
      * @param context Corresponds to the context of the targeted button
@@ -631,29 +669,22 @@ public abstract class EventManager {
     
     /**
      * Save data securely and globally for the plugin
-     * @param context An opaque value identifying the plugin (inPluginUUID) or the Property Inspector (inPropertyInspectorUUID). This value is received during the Registration procedure
      * @param payload A json object which is persistently saved globally
      * @return Returns true if the event was successfully sent, otherwise false
-     * @throws ErrorContextException If there is a context error
-     * @throws NullPointerException If the context is null or if the payload is null
+     * @throws NullPointerException If the payload is null
      */
-    protected final synchronized boolean setGlobalSettings(Context context, Payload payload) throws ErrorContextException, NullPointerException {
-        checkContext(context);
+    protected final synchronized boolean setGlobalSettings(Payload payload) {
         if(payload == null) throw new NullPointerException("payload is null !");
-        String json = String.format("{\"event\": \"setGlobalSettings\", \"context\": \"%s\", \"payload\": %s}", context, JSON.serialize(payload));
+        String json = String.format("{\"event\": \"setGlobalSettings\", \"context\": \"%s\", \"payload\": %s}", OPTIONS.pluginUUID, JSON.serialize(payload));
         return send(json);
     }
     
     /**
      * Request the global persistent data
-     * @param context An opaque value identifying the plugin (inPluginUUID) or the Property Inspector (inPropertyInspectorUUID). This value is received during the Registration procedure
      * @return Returns true if the event was successfully sent, otherwise false
-     * @throws ErrorContextException If there is a context error
-     * @throws NullPointerException If the context is null or if the payload is null
      */
-    protected final synchronized boolean getGlobalSettings(Context context) throws ErrorContextException, NullPointerException {
-        checkContext(context);
-        String json = String.format("{\"event\": \"getGlobalSettings\", \"context\": \"%s\"}", context);
+    protected final synchronized boolean getGlobalSettings() {
+        String json = String.format("{\"event\": \"getGlobalSettings\", \"context\": \"%s\"}", OPTIONS.pluginUUID);
         return send(json);
     }
     
@@ -700,6 +731,48 @@ public abstract class EventManager {
         } catch (java.net.MalformedURLException | java.net.URISyntaxException e) {
             return false;
         }
+    }
+    
+    
+    
+//CLASS
+    /**
+     * This class allows you to know whether or not the socket is still open or not
+     * @author JasonPercus
+     * @version 1.0
+     */
+    public class Connection {
+
+        
+        
+    //CONSTRUCTOR
+        /**
+         * Create a Connection object
+         */
+        private Connection() {
+        }
+        
+        
+        
+    //METHODES PUBLICS
+        /**
+         * Determines if the socket is opened
+         * @return Returns true if it does, otherwise false
+         */
+        public boolean isOpen(){
+            return manager.opened;
+        }
+        
+        /**
+         * Determines if the socket is closed or not
+         * @return Returns true if it does, otherwise false
+         */
+        public boolean isClosed(){
+            return !isOpen();
+        }
+        
+        
+        
     }
     
     

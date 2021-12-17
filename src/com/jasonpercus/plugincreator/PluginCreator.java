@@ -80,6 +80,14 @@ public abstract class PluginCreator {
      */
     public abstract String folderName();
     
+    /**
+     * Allows you to install the plugin at its final destination
+     * @return Returns an input stream pointing to a zip file (in the classpath) containing the plugin that must be deployed. Warning: This zip file must especially not contain the executable
+     */
+    public java.io.InputStream install(){
+        return null;
+    }
+    
     
     
 //MAIN
@@ -129,11 +137,34 @@ public abstract class PluginCreator {
     public static void register(String[] args) {
         if(args.length == 0){
             PluginCreator pc = searchMainClass();
-            if(isPlugin(pc)){
-                zip(pc);
-            }else{
-                if(OS.IS_WINDOWS)
-                    installPluginWin();
+            java.io.InputStream zipPlugin = pc.install();
+            if(zipPlugin == null){
+                if(isPlugin(pc)){
+                    zip(pc);
+                }else{
+                    if(OS.IS_WINDOWS)
+                        installPluginWin();
+                }
+            }else if(OS.IS_WINDOWS){
+                java.io.File pluginFolder = new java.io.File(getFolderPathPlugin()+File.separator+getFolderNamePlugin(pc));
+                if(pluginFolder.exists()){
+                    try {
+                        new ProcessBuilder("Explorer.exe", "/select,"+getFolderPathPlugin() + File.separator + getFolderNamePlugin(pc)).start();
+                    } catch (java.io.IOException ex) {}
+                    new OptionPane("Existing plugin", "A plugin with the same folder already exists !", OptionPane.TYPE_MESSAGE_ERROR).showMessageDialog();
+                }else{
+                    try {
+                        unzip(zipPlugin, pluginFolder.toPath());
+                    } catch (java.io.IOException ex) {
+                        new OptionPane(ex.getClass().getSimpleName(), ex.getMessage(), OptionPane.TYPE_MESSAGE_ERROR).showMessageDialog();
+                    }
+                    File thisfile = thisFileExecuted();
+                    if(thisfile != null){
+                        deleteOldExe(pc, thisfile);
+                        installNewExe(pc, thisfile);
+                        new OptionPane("Successful installation", "The plugin installation was successful !", OptionPane.TYPE_MESSAGE_INFORMATION).showMessageDialog();
+                    }
+                }
             }
         }else{
             Logger logger = new Logger();
@@ -372,11 +403,10 @@ public abstract class PluginCreator {
     /**
      * Return the executable file representing the Stream Deck plugin
      * @param plugin Corresponds to the object including the name of the folder (plugin) chosen by the user
-     * @param thisfile Corresponds to the .jar or .exe being executed at the moment
      * @return Return the executable file representing the Stream Deck plugin
      */
-    private static File getExeFilePlugin(PluginCreator plugin, File thisfile){
-        return new File(getFolderPathPlugin() + File.separator + getFolderNamePlugin(plugin) + File.separator + thisfile.getName());
+    private static File getExeFilePlugin(PluginCreator plugin){
+        return new File(getFolderPathPlugin() + File.separator + getFolderNamePlugin(plugin) + File.separator + plugin.name()+".exe");
     }
     
     /**
@@ -403,7 +433,7 @@ public abstract class PluginCreator {
      * @param thisfile Corresponds to the .jar or .exe being executed at the moment
      */
     private static void deleteOldExe(PluginCreator plugin, File thisfile){
-        File filePlugin = getExeFilePlugin(plugin, thisfile);
+        File filePlugin = getExeFilePlugin(plugin);
         if (filePlugin.exists())
             filePlugin.delete();
     }
@@ -415,7 +445,7 @@ public abstract class PluginCreator {
      */
     private static void installNewExe(PluginCreator plugin, File thisfile){
         try {
-            try (java.io.BufferedOutputStream bos = new java.io.BufferedOutputStream(new java.io.FileOutputStream(getExeFilePlugin(plugin, thisfile)))) {
+            try (java.io.BufferedOutputStream bos = new java.io.BufferedOutputStream(new java.io.FileOutputStream(getExeFilePlugin(plugin)))) {
                 try (java.io.BufferedInputStream bis = new java.io.BufferedInputStream(new java.io.FileInputStream(thisfile))) {
                     int value;
                     while ((value = bis.read()) > -1) {
@@ -539,7 +569,7 @@ public abstract class PluginCreator {
      */
     private static boolean isPlugin(PluginCreator plugin){
         File thisfile = thisFileExecuted();
-        File pluginFile = getExeFilePlugin(plugin, thisfile);
+        File pluginFile = getExeFilePlugin(plugin);
         try {
             return thisfile.getCanonicalFile().getAbsolutePath().equals(pluginFile.getCanonicalFile().getAbsolutePath());
         } catch (java.io.IOException ex) {
