@@ -136,6 +136,16 @@ public abstract class PluginCreator {
      */
     public static void register(String[] args) {
         if(args.length == 0){
+            try {
+                for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+                    if ("Windows".equals(info.getName())) {
+                        javax.swing.UIManager.setLookAndFeel(info.getClassName());
+                        break;
+                    }
+                }
+            } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | javax.swing.UnsupportedLookAndFeelException ex) {
+                java.util.logging.Logger.getLogger(Screen.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            }
             PluginCreator pc = searchMainClass();
             java.io.InputStream zipPlugin = pc.install();
             if(zipPlugin == null){
