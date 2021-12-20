@@ -17,6 +17,7 @@ import com.jasonpercus.plugincreator.exceptions.ErrorDeviceException;
 import com.jasonpercus.plugincreator.exceptions.InvalidActionException;
 import com.jasonpercus.plugincreator.exceptions.InvalidSvgImageException;
 import com.jasonpercus.plugincreator.exceptions.InvalidUrlException;
+import com.jasonpercus.plugincreator.models.Brush;
 import com.jasonpercus.plugincreator.models.Context;
 import com.jasonpercus.plugincreator.models.Extension;
 import com.jasonpercus.plugincreator.models.Payload;
@@ -470,6 +471,57 @@ public abstract class EventManager {
         String base64 = "data:image/" + extension.getExtension() + ";base64," + new String(java.util.Base64.getEncoder().encode(image));
         String json = String.format("{\"event\": \"setImage\", \"context\": \"%s\", \"payload\": {\"image\": \"%s\", \"target\": %d, \"state\": %d}}", context, base64, target.getTarget(), state);
         return send(json);
+    }
+    
+    /**
+     * Dynamically change the image displayed by an instance of an action
+     * @param context An opaque value identifying the instance's action you want to modify
+     * @param brush Corresponds to the canvas of the drawing
+     * @param target Specify if you want to display the title on the hardware and software (0), only on the hardware (1) or only on the software (2). Default is 0.
+     * @return Returns true if the event was successfully sent, otherwise false
+     * @throws ErrorContextException If there is a context error
+     * @throws NullPointerException If the context is null or if the brush is null or if the target is null
+     */
+    protected final synchronized boolean setImage(Context context, Brush brush, Target target) throws ErrorContextException, NullPointerException {
+        java.awt.image.BufferedImage image = new java.awt.image.BufferedImage(72, 72, java.awt.image.BufferedImage.TYPE_INT_ARGB);
+        java.awt.Graphics2D graphics2D = image.createGraphics();
+        brush.draw(graphics2D);
+        graphics2D.drawImage(image, null, 0, 0);
+        java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+        try {
+            javax.imageio.ImageIO.write(image, "png", baos);
+            byte[] array = baos.toByteArray();
+            return setImage(context, array, Extension.PNG, target);
+        } catch (java.io.IOException e) {
+            log(e);
+            return false;
+        }
+    }
+    
+    /**
+     * Dynamically change the image displayed by an instance of an action
+     * @param context An opaque value identifying the instance's action you want to modify
+     * @param brush Corresponds to the canvas of the drawing
+     * @param target Specify if you want to display the title on the hardware and software (0), only on the hardware (1) or only on the software (2). Default is 0.
+     * @param state A 0-based integer value representing the state of an action with multiple states. This is an optional parameter. If not specified, the image is set to all states.
+     * @return Returns true if the event was successfully sent, otherwise false
+     * @throws ErrorContextException If there is a context error
+     * @throws NullPointerException If the context is null or if the brush is null or if the target is null
+     */
+    protected final synchronized boolean setImage(Context context, Brush brush, Target target, int state) throws ErrorContextException, NullPointerException {
+        java.awt.image.BufferedImage image = new java.awt.image.BufferedImage(72, 72, java.awt.image.BufferedImage.TYPE_INT_ARGB);
+        java.awt.Graphics2D graphics2D = image.createGraphics();
+        brush.draw(graphics2D);
+        graphics2D.drawImage(image, null, 0, 0);
+        java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+        try {
+            javax.imageio.ImageIO.write(image, "png", baos);
+            byte[] array = baos.toByteArray();
+            return setImage(context, array, Extension.PNG, target, state);
+        } catch (java.io.IOException e) {
+            log(e);
+            return false;
+        }
     }
     
     /**
