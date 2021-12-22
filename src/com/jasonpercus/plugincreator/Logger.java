@@ -107,7 +107,7 @@ public class Logger {
             if(ex != null){
                 log(ex.toString());
                 for(StackTraceElement element : ex.getStackTrace())
-                    log(element.toString());
+                    log("    "+element.toString());
             }else{
                 log("null");
             }

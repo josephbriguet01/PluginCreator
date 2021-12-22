@@ -42,6 +42,18 @@ import com.jasonpercus.plugincreator.models.events.TitleParametersDidChange;
 import com.jasonpercus.plugincreator.models.events.WillAppear;
 import com.jasonpercus.plugincreator.models.events.WillDisappear;
 import com.jasonpercus.util.File;
+import com.jasonpercus.util.async.Async;
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.logging.Level;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 
 
 
@@ -50,6 +62,7 @@ import com.jasonpercus.util.File;
  * @author JasonPercus
  * @version 1.0
  */
+@SuppressWarnings("UseSpecificCatch")
 public abstract class EventManager {
     
     
@@ -348,10 +361,15 @@ public abstract class EventManager {
      * @throws ErrorContextException If there is a context error
      * @throws NullPointerException If the context is null
      */
-    protected final synchronized boolean showAlert(Context context) throws ErrorContextException, NullPointerException {
+    protected final synchronized Future<Boolean> showAlert(Context context) throws ErrorContextException, NullPointerException {
         checkContext(context);
         String json = String.format("{\"event\": \"showAlert\", \"context\": \"%s\"}", context);
-        return send(json);
+        
+        Future<Boolean> response = Async.execute(() -> {
+            return send(json);
+        });
+        
+        return response;
     }
     
     /**
@@ -361,10 +379,15 @@ public abstract class EventManager {
      * @throws ErrorContextException If there is a context error
      * @throws NullPointerException If the context is null
      */
-    protected final synchronized boolean showOk(Context context) throws ErrorContextException, NullPointerException {
+    protected final synchronized Future<Boolean> showOk(Context context) throws ErrorContextException, NullPointerException {
         checkContext(context);
         String json = String.format("{\"event\": \"showOk\", \"context\": \"%s\"}", context);
-        return send(json);
+        
+        Future<Boolean> response = Async.execute(() -> {
+            return send(json);
+        });
+        
+        return response;
     }
     
     /**
@@ -374,12 +397,17 @@ public abstract class EventManager {
      * @throws InvalidUrlException If the url is invalid
      * @throws NullPointerException If the url is null
      */
-    protected final synchronized boolean openUrl(String url) throws InvalidUrlException, NullPointerException {
+    protected final synchronized Future<Boolean> openUrl(String url) throws InvalidUrlException, NullPointerException {
         if(url == null) throw new NullPointerException("url is null !");
         if(url.isEmpty()) throw new InvalidUrlException("url is empty !");
         if(!checkUrl(url)) throw new InvalidUrlException("the url does not have a valid format !");
         String json = String.format("{\"event\": \"openUrl\", \"payload\": {\"url\": \"%s\"}}", url);
-        return send(json);
+        
+        Future<Boolean> response = Async.execute(() -> {
+            return send(json);
+        });
+        
+        return response;
     }
     
     /**
@@ -388,11 +416,16 @@ public abstract class EventManager {
      * @return Returns true if the event was successfully sent, otherwise false
      * @throws NullPointerException If the message is null
      */
-    protected final synchronized boolean logMessage(String message) throws NullPointerException {
+    protected final synchronized Future<Boolean> logMessage(String message) throws NullPointerException {
         if(message == null) throw new NullPointerException("message is null !");
         message = message.replace("\"", "\\\"");
         String json = String.format("{\"event\": \"logMessage\", \"payload\": {\"message\": \"%s\"}}", message);
-        return send(json);
+        
+        Future<Boolean> response = Async.execute(() -> {
+            return send(json);
+        });
+        
+        return response;
     }
     
     /**
@@ -404,13 +437,18 @@ public abstract class EventManager {
      * @throws ErrorContextException If there is a context error
      * @throws NullPointerException If the context is null or if the title is null or if the target is null
      */
-    protected final synchronized boolean setTitle(Context context, String title, Target target) throws ErrorContextException, NullPointerException {
+    protected final synchronized Future<Boolean> setTitle(Context context, String title, Target target) throws ErrorContextException, NullPointerException {
         checkContext(context);
         if(title == null) title = "";
         if(target == null) throw new NullPointerException("target is null !");
         title = title.replace("\"", "\\\"");
         String json = String.format("{\"event\": \"setTitle\", \"context\": \"%s\", \"payload\": {\"title\": \"%s\", \"target\": %d}}", context, title, target.getTarget());
-        return send(json);
+        
+        Future<Boolean> response = Async.execute(() -> {
+            return send(json);
+        });
+        
+        return response;
     }
     
     /**
@@ -423,13 +461,18 @@ public abstract class EventManager {
      * @throws ErrorContextException If there is a context error
      * @throws NullPointerException If the context is null or if the title is null or if the target is null
      */
-    protected final synchronized boolean setTitle(Context context, String title, Target target, int state) throws ErrorContextException, NullPointerException {
+    protected final synchronized Future<Boolean> setTitle(Context context, String title, Target target, int state) throws ErrorContextException, NullPointerException {
         checkContext(context);
         if(title == null) title = "";
         if(target == null) throw new NullPointerException("target is null !");
         title = title.replace("\"", "\\\"");
         String json = String.format("{\"event\": \"setTitle\", \"context\": \"%s\", \"payload\": {\"title\": \"%s\", \"target\": %d, \"state\": %d}}", context, title, target.getTarget(), state);
-        return send(json);
+        
+        Future<Boolean> response = Async.execute(() -> {
+            return send(json);
+        });
+        
+        return response;
     }
     
     /**
@@ -442,14 +485,19 @@ public abstract class EventManager {
      * @throws ErrorContextException If there is a context error
      * @throws NullPointerException If the context is null or if the image is null or if the extension is null or if the target is null
      */
-    protected final synchronized boolean setImage(Context context, byte[] image, Extension extension, Target target) throws ErrorContextException, NullPointerException {
+    protected final synchronized Future<Boolean> setImage(Context context, byte[] image, Extension extension, Target target) throws ErrorContextException, NullPointerException {
         checkContext(context);
         if(image == null) throw new NullPointerException("image datas is null !");
         if(extension == null) throw new NullPointerException("extension is null !");
         if(target == null) throw new NullPointerException("target is null !");
         String base64 = "data:image/" + extension.getExtension() + ";base64," + new String(java.util.Base64.getEncoder().encode(image));
         String json = String.format("{\"event\": \"setImage\", \"context\": \"%s\", \"payload\": {\"image\": \"%s\", \"target\": %d}}", context, base64, target.getTarget());
-        return send(json);
+        
+        Future<Boolean> response = Async.execute(() -> {
+            return send(json);
+        });
+        
+        return response;
     }
     
     /**
@@ -463,14 +511,19 @@ public abstract class EventManager {
      * @throws ErrorContextException If there is a context error
      * @throws NullPointerException If the context is null or if the image is null or if the extension is null or if the target is null
      */
-    protected final synchronized boolean setImage(Context context, byte[] image, Extension extension, Target target, int state) throws ErrorContextException, NullPointerException {
+    protected final synchronized Future<Boolean> setImage(Context context, byte[] image, Extension extension, Target target, int state) throws ErrorContextException, NullPointerException {
         checkContext(context);
         if(image == null) throw new NullPointerException("image datas is null !");
         if(extension == null) throw new NullPointerException("extension is null !");
         if(target == null) throw new NullPointerException("target is null !");
         String base64 = "data:image/" + extension.getExtension() + ";base64," + new String(java.util.Base64.getEncoder().encode(image));
         String json = String.format("{\"event\": \"setImage\", \"context\": \"%s\", \"payload\": {\"image\": \"%s\", \"target\": %d, \"state\": %d}}", context, base64, target.getTarget(), state);
-        return send(json);
+        
+        Future<Boolean> response = Async.execute(() -> {
+            return send(json);
+        });
+        
+        return response;
     }
     
     /**
@@ -482,7 +535,7 @@ public abstract class EventManager {
      * @throws ErrorContextException If there is a context error
      * @throws NullPointerException If the context is null or if the brush is null or if the target is null
      */
-    protected final synchronized boolean setImage(Context context, Brush brush, Target target) throws ErrorContextException, NullPointerException {
+    protected final synchronized Future<Boolean> setImage(Context context, Brush brush, Target target) throws ErrorContextException, NullPointerException {
         java.awt.image.BufferedImage image = new java.awt.image.BufferedImage(72, 72, java.awt.image.BufferedImage.TYPE_INT_ARGB);
         java.awt.Graphics2D graphics2D = image.createGraphics();
         brush.draw(graphics2D);
@@ -494,7 +547,32 @@ public abstract class EventManager {
             return setImage(context, array, Extension.PNG, target);
         } catch (java.io.IOException e) {
             log(e);
-            return false;
+            return new Future<Boolean>() {
+                @Override
+                public boolean cancel(boolean mayInterruptIfRunning) {
+                    return false;
+                }
+
+                @Override
+                public boolean isCancelled() {
+                    return false;
+                }
+
+                @Override
+                public boolean isDone() {
+                    return true;
+                }
+
+                @Override
+                public Boolean get() throws InterruptedException, ExecutionException {
+                    return false;
+                }
+
+                @Override
+                public Boolean get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+                    return false;
+                }
+            };
         }
     }
     
@@ -508,7 +586,7 @@ public abstract class EventManager {
      * @throws ErrorContextException If there is a context error
      * @throws NullPointerException If the context is null or if the brush is null or if the target is null
      */
-    protected final synchronized boolean setImage(Context context, Brush brush, Target target, int state) throws ErrorContextException, NullPointerException {
+    protected final synchronized Future<Boolean> setImage(Context context, Brush brush, Target target, int state) throws ErrorContextException, NullPointerException {
         java.awt.image.BufferedImage image = new java.awt.image.BufferedImage(72, 72, java.awt.image.BufferedImage.TYPE_INT_ARGB);
         java.awt.Graphics2D graphics2D = image.createGraphics();
         brush.draw(graphics2D);
@@ -520,7 +598,32 @@ public abstract class EventManager {
             return setImage(context, array, Extension.PNG, target, state);
         } catch (java.io.IOException e) {
             log(e);
-            return false;
+            return new Future<Boolean>() {
+                @Override
+                public boolean cancel(boolean mayInterruptIfRunning) {
+                    return false;
+                }
+
+                @Override
+                public boolean isCancelled() {
+                    return false;
+                }
+
+                @Override
+                public boolean isDone() {
+                    return true;
+                }
+
+                @Override
+                public Boolean get() throws InterruptedException, ExecutionException {
+                    return false;
+                }
+
+                @Override
+                public Boolean get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+                    return false;
+                }
+            };
         }
     }
     
@@ -534,20 +637,50 @@ public abstract class EventManager {
      * @throws NullPointerException If the context is null or if the image is null or if the extension is null or if the target is null
      * @throws java.io.FileNotFoundException If the image file does not exist
      */
-    protected final synchronized boolean setImage(Context context, File file, Target target) throws ErrorContextException, NullPointerException, java.io.FileNotFoundException {
+    protected final synchronized Future<Boolean> setImage(Context context, java.io.File file, Target target) throws ErrorContextException, NullPointerException, java.io.FileNotFoundException {
         checkContext(context);
         if(file == null) throw new NullPointerException("file is null !");
         if(!file.exists()) throw new java.io.FileNotFoundException("file is not found !");
         if(target == null) throw new NullPointerException("target is null !");
         try {
-            String extension = file.getExtension();
+            String extension = File.getExtension(file);
             byte[] image = java.nio.file.Files.readAllBytes(file.toPath());
             String base64 = "data:image/" + extension + ";base64," + new String(java.util.Base64.getEncoder().encode(image));
             String json = String.format("{\"event\": \"setImage\", \"context\": \"%s\", \"payload\": {\"image\": \"%s\", \"target\": %d}}", context, base64, target.getTarget());
-            return send(json);
+            
+            Future<Boolean> response = Async.execute(() -> {
+                return send(json);
+            });
+
+            return response;
         } catch (java.io.IOException ex) {
             LOGGER.log(ex);
-            return false;
+            return new Future<Boolean>() {
+                @Override
+                public boolean cancel(boolean mayInterruptIfRunning) {
+                    return false;
+                }
+
+                @Override
+                public boolean isCancelled() {
+                    return false;
+                }
+
+                @Override
+                public boolean isDone() {
+                    return true;
+                }
+
+                @Override
+                public Boolean get() throws InterruptedException, ExecutionException {
+                    return false;
+                }
+
+                @Override
+                public Boolean get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+                    return false;
+                }
+            };
         }
     }
     
@@ -562,20 +695,50 @@ public abstract class EventManager {
      * @throws NullPointerException If the context is null or if the image is null or if the extension is null or if the target is null
      * @throws java.io.FileNotFoundException If the image file does not exist
      */
-    protected final synchronized boolean setImage(Context context, File file, Target target, int state) throws ErrorContextException, NullPointerException, java.io.FileNotFoundException {
+    protected final synchronized Future<Boolean> setImage(Context context, java.io.File file, Target target, int state) throws ErrorContextException, NullPointerException, java.io.FileNotFoundException {
         checkContext(context);
         if(file == null) throw new NullPointerException("file is null !");
         if(!file.exists()) throw new java.io.FileNotFoundException("file is not found !");
         if(target == null) throw new NullPointerException("target is null !");
         try {
-            String extension = file.getExtension();
+            String extension = File.getExtension(file);
             byte[] image = java.nio.file.Files.readAllBytes(file.toPath());
             String base64 = "data:image/" + extension + ";base64," + new String(java.util.Base64.getEncoder().encode(image));
             String json = String.format("{\"event\": \"setImage\", \"context\": \"%s\", \"payload\": {\"image\": \"%s\", \"target\": %d, \"state\": %d}}", context, base64, target.getTarget(), state);
-            return send(json);
+            
+            Future<Boolean> response = Async.execute(() -> {
+                return send(json);
+            });
+
+            return response;
         } catch (java.io.IOException ex) {
             LOGGER.log(ex);
-            return false;
+            return new Future<Boolean>() {
+                @Override
+                public boolean cancel(boolean mayInterruptIfRunning) {
+                    return false;
+                }
+
+                @Override
+                public boolean isCancelled() {
+                    return false;
+                }
+
+                @Override
+                public boolean isDone() {
+                    return true;
+                }
+
+                @Override
+                public Boolean get() throws InterruptedException, ExecutionException {
+                    return false;
+                }
+
+                @Override
+                public Boolean get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+                    return false;
+                }
+            };
         }
     }
     
@@ -589,14 +752,19 @@ public abstract class EventManager {
      * @throws NullPointerException If the context is null or if the image is null or if the extension is null or if the target is null
      * @throws InvalidSvgImageException If the svg image is invalid
      */
-    protected final synchronized boolean setImageSvg(Context context, String image, Target target) throws ErrorContextException, NullPointerException, InvalidSvgImageException {
+    protected final synchronized Future<Boolean> setImageSvg(Context context, String image, Target target) throws ErrorContextException, NullPointerException, InvalidSvgImageException {
         checkContext(context);
         if(image == null) throw new NullPointerException("svg image is null !");
         if(image.isEmpty()) throw new InvalidSvgImageException("svg image is empty !");
         if(target == null) throw new NullPointerException("target is null !");
         String svg = "data:image/svg+xml;charset=utf8," + image;
         String json = String.format("{\"event\": \"setImage\", \"context\": \"%s\", \"payload\": {\"image\": \"%s\", \"target\": %d}}", context, svg, target.getTarget());
-        return send(json);
+        
+        Future<Boolean> response = Async.execute(() -> {
+            return send(json);
+        });
+        
+        return response;
     }
     
     /**
@@ -610,14 +778,19 @@ public abstract class EventManager {
      * @throws NullPointerException If the context is null or if the image is null or if the extension is null or if the target is null
      * @throws InvalidSvgImageException If the svg image is invalid
      */
-    protected final synchronized boolean setImageSvg(Context context, String image, Target target, int state) throws ErrorContextException, NullPointerException, InvalidSvgImageException {
+    protected final synchronized Future<Boolean> setImageSvg(Context context, String image, Target target, int state) throws ErrorContextException, NullPointerException, InvalidSvgImageException {
         checkContext(context);
         if(image == null) throw new NullPointerException("svg image is null !");
         if(image.isEmpty()) throw new InvalidSvgImageException("svg image is empty !");
         if(target == null) throw new NullPointerException("target is null !");
         String svg = "data:image/svg+xml;charset=utf8," + image;
         String json = String.format("{\"event\": \"setImage\", \"context\": \"%s\", \"payload\": {\"image\": \"%s\", \"target\": %d, \"state\": %d}}", context, svg, target.getTarget(), state);
-        return send(json);
+        
+        Future<Boolean> response = Async.execute(() -> {
+            return send(json);
+        });
+        
+        return response;
     }
     
     /**
@@ -628,10 +801,15 @@ public abstract class EventManager {
      * @throws ErrorContextException If there is a context error
      * @throws NullPointerException If the context is null
      */
-    protected final synchronized boolean setState(Context context, int state) throws ErrorContextException, NullPointerException {
+    protected final synchronized Future<Boolean> setState(Context context, int state) throws ErrorContextException, NullPointerException {
         checkContext(context);
         String json = String.format("{\"event\": \"setState\", \"context\": \"%s\", \"payload\": {\"state\": %d}}", context, state);
-        return send(json);
+        
+        Future<Boolean> response = Async.execute(() -> {
+            return send(json);
+        });
+        
+        return response;
     }
     
     /**
@@ -644,13 +822,18 @@ public abstract class EventManager {
      * @throws NullPointerException If the context is null or if the profil name is null
      * @throws ErrorDeviceException If there is a device error
      */
-    protected final synchronized boolean switchToProfile(Context context, String device, String profileName) throws ErrorContextException, NullPointerException, ErrorDeviceException {
+    protected final synchronized Future<Boolean> switchToProfile(Context context, String device, String profileName) throws ErrorContextException, NullPointerException, ErrorDeviceException {
         checkContext(context);
         if(device == null) throw new NullPointerException("device is null !");
         if(device.isEmpty()) throw new ErrorDeviceException("device is empty !");
         if(profileName == null) throw new NullPointerException("profileName is null !");
         String json = String.format("{\"event\": \"switchToProfile\", \"context\": \"%s\", \"device\": \"%s\", \"payload\": {\"profile\": \"%s\"}}", context, device, profileName);
-        return send(json);
+        
+        Future<Boolean> response = Async.execute(() -> {
+            return send(json);
+        });
+        
+        return response;
     }
     
     /**
@@ -663,13 +846,18 @@ public abstract class EventManager {
      * @throws NullPointerException If the context is null or if the action is null or if the payload is null
      * @throws InvalidActionException If the action is empty
      */
-    protected final synchronized boolean sendToPropertyInspector(Context context, String action, Payload payload) throws ErrorContextException, NullPointerException, InvalidActionException {
+    protected final synchronized Future<Boolean> sendToPropertyInspector(Context context, String action, Payload payload) throws ErrorContextException, NullPointerException, InvalidActionException {
         checkContext(context);
         if(action == null) throw new NullPointerException("action is null !");
         if(action.isEmpty()) throw new InvalidActionException("action is empty !");
         if(payload == null) throw new NullPointerException("payload is null !");
         String json = String.format("{\"event\": \"sendToPropertyInspector\", \"action\": \"%s\", \"context\": \"%s\", \"payload\": %s}", action, context, JSON.serialize(payload));
-        return send(json);
+        
+        Future<Boolean> response = Async.execute(() -> {
+            return send(json);
+        });
+        
+        return response;
     }
     
     /**
@@ -682,13 +870,18 @@ public abstract class EventManager {
      * @throws NullPointerException If the context is null or if the action is null or if the payload is null
      * @throws InvalidActionException If the action is empty
      */
-    protected final synchronized boolean sendToPlugin(Context context, String action, Payload payload) throws ErrorContextException, NullPointerException, InvalidActionException {
+    protected final synchronized Future<Boolean> sendToPlugin(Context context, String action, Payload payload) throws ErrorContextException, NullPointerException, InvalidActionException {
         checkContext(context);
         if(action == null) throw new NullPointerException("action is null !");
         if(action.isEmpty()) throw new InvalidActionException("action is empty !");
         if(payload == null) throw new NullPointerException("payload is null !");
         String json = String.format("{\"event\": \"sendToPlugin\", \"action\": \"%s\", \"context\": \"%s\", \"payload\": %s}", action, context, JSON.serialize(payload));
-        return send(json);
+        
+        Future<Boolean> response = Async.execute(() -> {
+            return send(json);
+        });
+        
+        return response;
     }
     
     /**
@@ -699,11 +892,16 @@ public abstract class EventManager {
      * @throws ErrorContextException If there is a context error
      * @throws NullPointerException If the context is null or if the payload is null
      */
-    protected final synchronized boolean setSettings(Context context, Payload payload) throws ErrorContextException, NullPointerException {
+    protected final synchronized Future<Boolean> setSettings(Context context, Payload payload) throws ErrorContextException, NullPointerException {
         checkContext(context);
         if(payload == null) throw new NullPointerException("payload is null !");
         String json = String.format("{\"event\": \"setSettings\", \"context\": \"%s\", \"payload\": %s}", context, JSON.serialize(payload));
-        return send(json);
+        
+        Future<Boolean> response = Async.execute(() -> {
+            return send(json);
+        });
+        
+        return response;
     }
     
     /**
@@ -713,10 +911,15 @@ public abstract class EventManager {
      * @throws ErrorContextException If there is a context error
      * @throws NullPointerException If the context is null
      */
-    protected final synchronized boolean getSettings(Context context) throws ErrorContextException, NullPointerException {
+    protected final synchronized Future<Boolean> getSettings(Context context) throws ErrorContextException, NullPointerException {
         checkContext(context);
         String json = String.format("{\"event\": \"getSettings\", \"context\": \"%s\"}", context);
-        return send(json);
+        
+        Future<Boolean> response = Async.execute(() -> {
+            return send(json);
+        });
+        
+        return response;
     }
     
     /**
@@ -725,19 +928,81 @@ public abstract class EventManager {
      * @return Returns true if the event was successfully sent, otherwise false
      * @throws NullPointerException If the payload is null
      */
-    protected final synchronized boolean setGlobalSettings(Payload payload) {
+    protected final synchronized Future<Boolean> setGlobalSettings(Payload payload) {
         if(payload == null) throw new NullPointerException("payload is null !");
         String json = String.format("{\"event\": \"setGlobalSettings\", \"context\": \"%s\", \"payload\": %s}", OPTIONS.pluginUUID, JSON.serialize(payload));
-        return send(json);
+        
+        Future<Boolean> response = Async.execute(() -> {
+            return send(json);
+        });
+        
+        return response;
     }
     
     /**
      * Request the global persistent data
      * @return Returns true if the event was successfully sent, otherwise false
      */
-    protected final synchronized boolean getGlobalSettings() {
+    protected final synchronized Future<Boolean> getGlobalSettings() {
         String json = String.format("{\"event\": \"getGlobalSettings\", \"context\": \"%s\"}", OPTIONS.pluginUUID);
-        return send(json);
+        
+        Future<Boolean> response = Async.execute(() -> {
+            return send(json);
+        });
+        
+        return response;
+    }
+    
+    /**
+     * Play a sound
+     * @param sound Corresponds to the sound
+     */
+    protected final synchronized void sound(Sound sound){
+        Async.execute(() -> {
+            if(sound != null){
+                try {
+                    Clip clip = AudioSystem.getClip();
+                    AudioInputStream inputStream = AudioSystem.getAudioInputStream(EventManager.class.getClassLoader().getResource("com/jasonpercus/plugincreator/ui/sound/"+sound));
+                    clip.open(inputStream);
+                    clip.start();
+                } catch (Exception ex) {
+                    log(ex);
+                }
+            } else {
+                log("Sound is null !");
+            }
+        });
+    }
+    
+    /**
+     * Play a sound (*.wav)
+     * @param sound Corresponds to the sound (*.wav)
+     */
+    protected final synchronized void sound(java.io.File sound){
+        Async.execute(() -> {
+            if(sound != null){
+                try {
+                    String extension = File.getExtension(sound);
+                    if(extension.equals("wav")){
+                        try {
+                            BufferedInputStream bis = new BufferedInputStream(new FileInputStream(sound));
+                            Clip clip = AudioSystem.getClip();
+                            AudioInputStream inputStream = AudioSystem.getAudioInputStream(bis);
+                            clip.open(inputStream);
+                            clip.start();
+                        } catch (Exception ex) {
+                            log(ex);
+                        }
+                    }else{
+                        log("File is not a wav sound !");
+                    }
+                } catch (FileNotFoundException ex) {
+                    log(ex);
+                }
+            } else {
+                log("File sound is null !");
+            }
+        });
     }
     
     

@@ -29,7 +29,7 @@ public abstract class PluginCreator {
     /**
      * Corresponds to the version number of the plugin creator code
      */
-    public final static int VERSION_CODE = 4;
+    public final static int VERSION_CODE = 5;
     
 
     

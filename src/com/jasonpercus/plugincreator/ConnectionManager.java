@@ -43,6 +43,7 @@ import com.jasonpercus.plugincreator.models.events.WillAppear;
 import com.jasonpercus.plugincreator.models.events.WillDisappear;
 import com.jasonpercus.plugincreator.models.TitleParameters;
 import com.jasonpercus.plugincreator.models.events.Event;
+import com.jasonpercus.util.async.Async;
 
 
 
@@ -136,6 +137,7 @@ class ConnectionManager implements OnTextMessage {
             LOGGER.log(ex);
         }
         LOGGER.log("BEFORE ON CREATE PLUGIN");
+        Async.create();
         for(EventManager manager : MANAGERS){
             manager.onCreate();
         }
@@ -160,6 +162,7 @@ class ConnectionManager implements OnTextMessage {
             for(EventManager manager : MANAGERS){
                 manager.onDestroy();
             }
+            Async.shutdownNow();
             LOGGER.log("AFTER ON DESTROY PLUGIN");
             LOGGER.log("<-----------------------------------------------------END");
             LOGGER.close();
@@ -215,7 +218,9 @@ class ConnectionManager implements OnTextMessage {
                     event.event = matcher.group("event");
                     event.rawDatas = message;
                     for(EventManager manager : MANAGERS){
-                        manager.event(event, new GsonBuilder());
+                        Async.execute(() -> {
+                            manager.event(event, new GsonBuilder());
+                        });
                     }
                 }else{
                     LOGGER.log("NOT FOUND onMessage: "+message);
@@ -244,13 +249,18 @@ class ConnectionManager implements OnTextMessage {
 
             for(EventManager manager : MANAGERS){
                 GsonBuilder gb = new GsonBuilder();
-                manager.didReceiveSettings(event, context, event.payload.settings, gb);
-                manager.event(event, gb);
+                
+                Async.execute(() -> {
+                    manager.didReceiveSettings(event, context, event.payload.settings, gb);
+                    manager.event(event, gb);
+                });
             }
         }catch(ErrorContextException | NullPointerException ex){
             for(EventManager manager : MANAGERS){
                 GsonBuilder gb = new GsonBuilder();
-                manager.event(event, gb);
+                Async.execute(() -> {
+                    manager.event(event, gb);
+                });
             }
         }
     }
@@ -266,8 +276,11 @@ class ConnectionManager implements OnTextMessage {
         
         for(EventManager manager : MANAGERS){
             GsonBuilder gb = new GsonBuilder();
-            manager.didReceiveGlobalSettings(event, event.payload.settings, gb);
-            manager.event(event, gb);
+            
+            Async.execute(() -> {
+                manager.didReceiveGlobalSettings(event, event.payload.settings, gb);
+                manager.event(event, gb);
+            });
         }
     }
     
@@ -285,13 +298,18 @@ class ConnectionManager implements OnTextMessage {
 
             for(EventManager manager : MANAGERS){
                 GsonBuilder gb = new GsonBuilder();
-                manager.keyDown(event, context, gb);
-                manager.event(event, gb);
+                
+                Async.execute(() -> {
+                    manager.keyDown(event, context, gb);
+                    manager.event(event, gb);
+                });
             }
         }catch(ErrorContextException | NullPointerException ex){
             for(EventManager manager : MANAGERS){
                 GsonBuilder gb = new GsonBuilder();
-                manager.event(event, gb);
+                Async.execute(() -> {
+                    manager.event(event, gb);
+                });
             }
         }
     }
@@ -310,13 +328,19 @@ class ConnectionManager implements OnTextMessage {
 
             for(EventManager manager : MANAGERS){
                 GsonBuilder gb = new GsonBuilder();
-                manager.keyUp(event, context, gb);
-                manager.event(event, gb);
+                
+                Async.execute(() -> {
+                    manager.keyUp(event, context, gb);
+                    manager.event(event, gb);
+                });
             }
         }catch(ErrorContextException | NullPointerException ex){
             for(EventManager manager : MANAGERS){
                 GsonBuilder gb = new GsonBuilder();
-                manager.event(event, gb);
+                
+                Async.execute(() -> {
+                    manager.event(event, gb);
+                });
             }
         }
     }
@@ -335,13 +359,20 @@ class ConnectionManager implements OnTextMessage {
 
             for(EventManager manager : MANAGERS){
                 GsonBuilder gb = new GsonBuilder();
-                manager.willAppear(event, context, gb);
-                manager.event(event, gb);
+                
+                Async.execute(() -> {
+                    manager.willAppear(event, context, gb);
+                    manager.event(event, gb);
+                });
             }
         }catch(ErrorContextException | NullPointerException ex){
             for(EventManager manager : MANAGERS){
                 GsonBuilder gb = new GsonBuilder();
                 manager.event(event, gb);
+                
+                Async.execute(() -> {
+                    manager.event(event, gb);
+                });
             }
         }
     }
@@ -360,13 +391,19 @@ class ConnectionManager implements OnTextMessage {
 
             for(EventManager manager : MANAGERS){
                 GsonBuilder gb = new GsonBuilder();
-                manager.willDisappear(event, context, gb);
-                manager.event(event, gb);
+                
+                Async.execute(() -> {
+                    manager.willDisappear(event, context, gb);
+                    manager.event(event, gb);
+                });
             }
         }catch(ErrorContextException | NullPointerException ex){
             for(EventManager manager : MANAGERS){
                 GsonBuilder gb = new GsonBuilder();
-                manager.event(event, gb);
+                
+                Async.execute(() -> {
+                    manager.event(event, gb);
+                });
             }
         }
     }
@@ -385,13 +422,19 @@ class ConnectionManager implements OnTextMessage {
 
             for(EventManager manager : MANAGERS){
                 GsonBuilder gb = new GsonBuilder();
-                manager.titleParametersDidChange(event, context, event.payload.title, event.payload.titleParameters, gb);
-                manager.event(event, gb);
+                
+                Async.execute(() -> {
+                    manager.titleParametersDidChange(event, context, event.payload.title, event.payload.titleParameters, gb);
+                    manager.event(event, gb);
+                });
             }
         }catch(ErrorContextException | NullPointerException ex){
             for(EventManager manager : MANAGERS){
                 GsonBuilder gb = new GsonBuilder();
-                manager.event(event, gb);
+                
+                Async.execute(() -> {
+                    manager.event(event, gb);
+                });
             }
         }
     }
@@ -407,8 +450,11 @@ class ConnectionManager implements OnTextMessage {
         
         for(EventManager manager : MANAGERS){
             GsonBuilder gb = new GsonBuilder();
-            manager.deviceDidConnect(event, event.device, event.deviceInfo, gb);
-            manager.event(event, gb);
+            
+            Async.execute(() -> {
+                manager.deviceDidConnect(event, event.device, event.deviceInfo, gb);
+                manager.event(event, gb);
+            });
         }
     }
     
@@ -423,8 +469,11 @@ class ConnectionManager implements OnTextMessage {
         
         for(EventManager manager : MANAGERS){
             GsonBuilder gb = new GsonBuilder();
-            manager.deviceDidDisconnect(event, event.device, gb);
-            manager.event(event, gb);
+            
+            Async.execute(() -> {
+                manager.deviceDidDisconnect(event, event.device, gb);
+                manager.event(event, gb);
+            });
         }
     }
     
@@ -439,8 +488,11 @@ class ConnectionManager implements OnTextMessage {
 
         for (EventManager manager : MANAGERS) {
             GsonBuilder gb = new GsonBuilder();
-            manager.applicationDidLaunch(event, event.payload.application, gb);
-            manager.event(event, gb);
+            
+            Async.execute(() -> {
+                manager.applicationDidLaunch(event, event.payload.application, gb);
+                manager.event(event, gb);
+            });
         }
     }
     
@@ -455,8 +507,11 @@ class ConnectionManager implements OnTextMessage {
         
         for(EventManager manager : MANAGERS){
             GsonBuilder gb = new GsonBuilder();
-            manager.applicationDidTerminate(event, event.payload.application, gb);
-            manager.event(event, gb);
+            
+            Async.execute(() -> {
+                manager.applicationDidTerminate(event, event.payload.application, gb);
+                manager.event(event, gb);
+            });
         }
     }
     
@@ -471,8 +526,11 @@ class ConnectionManager implements OnTextMessage {
         
         for(EventManager manager : MANAGERS){
             GsonBuilder gb = new GsonBuilder();
-            manager.systemDidWakeUp(event, gb);
-            manager.event(event, gb);
+            
+            Async.execute(() -> {
+                manager.systemDidWakeUp(event, gb);
+                manager.event(event, gb);
+            });
         }
     }
     
@@ -490,13 +548,19 @@ class ConnectionManager implements OnTextMessage {
 
             for(EventManager manager : MANAGERS){
                 GsonBuilder gb = new GsonBuilder();
-                manager.propertyInspectorDidAppear(event, context, gb);
-                manager.event(event, gb);
+                
+                Async.execute(() -> {
+                    manager.propertyInspectorDidAppear(event, context, gb);
+                    manager.event(event, gb);
+                });
             }
         }catch(ErrorContextException | NullPointerException ex){
             for(EventManager manager : MANAGERS){
                 GsonBuilder gb = new GsonBuilder();
-                manager.event(event, gb);
+                
+                Async.execute(() -> {
+                    manager.event(event, gb);
+                });
             }
         }
     }
@@ -515,13 +579,19 @@ class ConnectionManager implements OnTextMessage {
 
             for(EventManager manager : MANAGERS){
                 GsonBuilder gb = new GsonBuilder();
-                manager.propertyInspectorDidDisappear(event, context, gb);
-                manager.event(event, gb);
+                
+                Async.execute(() -> {
+                    manager.propertyInspectorDidDisappear(event, context, gb);
+                    manager.event(event, gb);
+                });
             }
         }catch(ErrorContextException | NullPointerException ex){
             for(EventManager manager : MANAGERS){
                 GsonBuilder gb = new GsonBuilder();
-                manager.event(event, gb);
+                
+                Async.execute(() -> {
+                    manager.event(event, gb);
+                });
             }
         }
     }
@@ -540,13 +610,20 @@ class ConnectionManager implements OnTextMessage {
 
             for(EventManager manager : MANAGERS){
                 GsonBuilder gb = new GsonBuilder();
-                manager.sendToPlugin(event, context, event.payload, gb);
-                manager.event(event, gb);
+                
+                Async.execute(() -> {
+                    manager.sendToPlugin(event, context, event.payload, gb);
+                    manager.event(event, gb);
+                });
             }
         }catch(ErrorContextException | NullPointerException ex){
             for(EventManager manager : MANAGERS){
                 GsonBuilder gb = new GsonBuilder();
                 manager.event(event, gb);
+                
+                Async.execute(() -> {
+                    manager.event(event, gb);
+                });
             }
         }
     }
@@ -567,11 +644,20 @@ class ConnectionManager implements OnTextMessage {
                 GsonBuilder gb = new GsonBuilder();
                 manager.sendToPropertyInspector(event, context, event.payload, gb);
                 manager.event(event, gb);
+                
+                Async.execute(() -> {
+                    manager.sendToPropertyInspector(event, context, event.payload, gb);
+                    manager.event(event, gb);
+                });
             }
         }catch(ErrorContextException | NullPointerException ex){
             for(EventManager manager : MANAGERS){
                 GsonBuilder gb = new GsonBuilder();
                 manager.event(event, gb);
+                
+                Async.execute(() -> {
+                    manager.event(event, gb);
+                });
             }
         }
     }
