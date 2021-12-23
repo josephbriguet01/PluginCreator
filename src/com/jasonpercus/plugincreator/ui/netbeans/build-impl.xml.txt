@@ -1083,7 +1083,6 @@ is divided into following sections:
 &lt;/launch4jConfig&gt;</echo>
         <delete file="${store.dir}/temp_final.jar"/>
         <exec command="${launch4j.dir.exe} 'launch.xml'"/>
-        <delete file="${store.dir}/${store.jar.name}.jar"/>
         <delete file="launch.xml"/>
     </target>
 
