@@ -29,7 +29,7 @@ public abstract class PluginCreator {
     /**
      * Corresponds to the version number of the plugin creator code
      */
-    public final static int VERSION_CODE = 5;
+    public final static int VERSION_CODE = 6;
     
 
     
@@ -135,7 +135,7 @@ public abstract class PluginCreator {
      * @param args Corresponds to the arguments provided by Stream Deck
      */
     public static void register(String[] args) {
-        if(args.length == 0){
+        if(args.length == 0 || (args.length == 1 && args[0].toUpperCase().equals("INSTALL_SILENT=1"))){
             try {
                 for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
                     if ("Windows".equals(info.getName())) {
@@ -172,7 +172,8 @@ public abstract class PluginCreator {
                     if(thisfile != null){
                         deleteOldExe(pc, thisfile);
                         installNewExe(pc, thisfile);
-                        new OptionPane("Successful installation", "The plugin installation was successful !", OptionPane.TYPE_MESSAGE_INFORMATION).showMessageDialog();
+                        if(args.length == 0 || (args.length > 0 && !args[0].toUpperCase().equals("INSTALL_SILENT=1")))
+                            new OptionPane("Successful installation", "The plugin installation was successful !", OptionPane.TYPE_MESSAGE_INFORMATION).showMessageDialog();
                     }
                 }
             }
